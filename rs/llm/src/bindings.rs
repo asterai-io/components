@@ -488,26 +488,60 @@ pub mod exports {
                 use super::super::super::super::_rt;
                 #[doc(hidden)]
                 #[allow(non_snake_case)]
-                pub unsafe fn _export_greet_cabi<T: Guest>(arg0: *mut u8, arg1: usize) {
+                pub unsafe fn _export_prompt_cabi<T: Guest>(
+                    arg0: *mut u8,
+                    arg1: usize,
+                    arg2: *mut u8,
+                    arg3: usize,
+                ) -> *mut u8 {
                     #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
                     let len0 = arg1;
                     let bytes0 = _rt::Vec::from_raw_parts(arg0.cast(), len0, len0);
-                    T::greet(_rt::string_lift(bytes0));
+                    let len1 = arg3;
+                    let bytes1 = _rt::Vec::from_raw_parts(arg2.cast(), len1, len1);
+                    let result2 = T::prompt(
+                        _rt::string_lift(bytes0),
+                        _rt::string_lift(bytes1),
+                    );
+                    let ptr3 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    let vec4 = (result2.into_bytes()).into_boxed_slice();
+                    let ptr4 = vec4.as_ptr().cast::<u8>();
+                    let len4 = vec4.len();
+                    ::core::mem::forget(vec4);
+                    *ptr3.add(4).cast::<usize>() = len4;
+                    *ptr3.add(0).cast::<*mut u8>() = ptr4.cast_mut();
+                    ptr3
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_prompt<T: Guest>(arg0: *mut u8) {
+                    let l0 = *arg0.add(0).cast::<*mut u8>();
+                    let l1 = *arg0.add(4).cast::<usize>();
+                    _rt::cabi_dealloc(l0, l1, 1);
                 }
                 pub trait Guest {
-                    fn greet(name: _rt::String);
+                    fn prompt(prompt: _rt::String, model: _rt::String) -> _rt::String;
                 }
                 #[doc(hidden)]
                 macro_rules! __export_asterai_llm_llm_0_1_0_cabi {
                     ($ty:ident with_types_in $($path_to_types:tt)*) => {
-                        const _ : () = { #[export_name = "asterai:llm/llm@0.1.0#greet"]
-                        unsafe extern "C" fn export_greet(arg0 : * mut u8, arg1 : usize,)
-                        { $($path_to_types)*:: _export_greet_cabi::<$ty > (arg0, arg1) }
-                        };
+                        const _ : () = { #[export_name = "asterai:llm/llm@0.1.0#prompt"]
+                        unsafe extern "C" fn export_prompt(arg0 : * mut u8, arg1 : usize,
+                        arg2 : * mut u8, arg3 : usize,) -> * mut u8 {
+                        $($path_to_types)*:: _export_prompt_cabi::<$ty > (arg0, arg1,
+                        arg2, arg3) } #[export_name =
+                        "cabi_post_asterai:llm/llm@0.1.0#prompt"] unsafe extern "C" fn
+                        _post_return_prompt(arg0 : * mut u8,) { $($path_to_types)*::
+                        __post_return_prompt::<$ty > (arg0) } };
                     };
                 }
                 #[doc(hidden)]
                 pub(crate) use __export_asterai_llm_llm_0_1_0_cabi;
+                #[repr(align(4))]
+                struct _RetArea([::core::mem::MaybeUninit<u8>; 8]);
+                static mut _RET_AREA: _RetArea = _RetArea(
+                    [::core::mem::MaybeUninit::uninit(); 8],
+                );
             }
         }
     }
@@ -588,8 +622,8 @@ pub(crate) use __export_component_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.36.0:asterai:llm@0.1.0:component:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 733] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xdd\x04\x01A\x02\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 743] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xe7\x04\x01A\x02\x01\
 A\x04\x01B\x17\x01r\x01\x07versions\x04\0\x0cruntime-info\x03\0\0\x01ps\x01r\x03\
 \x04names\x07versions\x0ainterfaces\x02\x04\0\x0ecomponent-info\x03\0\x03\x01m\x05\
 \x13component-not-found\x12function-not-found\x0cinvalid-args\x11invocation-fail\
@@ -600,10 +634,10 @@ ther-components\x01\x0b\x01k\x04\x01@\x01\x04names\0\x0c\x04\0\x0dget-component\
 \x0d\x01@\x02\x0ecomponent-names\x0einterface-names\0\x7f\x04\0\x14component-imp\
 lements\x01\x0e\x01j\x01s\x01\x08\x01@\x03\x0ecomponent-names\x0dfunction-names\x09\
 args-jsons\0\x0f\x04\0\x17call-component-function\x01\x10\x03\0\x16asterai:host/\
-api@1.0.0\x05\0\x01B\x02\x01@\x01\x04names\x01\0\x04\0\x05greet\x01\0\x04\0\x15a\
-sterai:llm/llm@0.1.0\x05\x01\x04\0\x1basterai:llm/component@0.1.0\x04\0\x0b\x0f\x01\
-\0\x09component\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\
-\x070.220.0\x10wit-bindgen-rust\x060.36.0";
+api@1.0.0\x05\0\x01B\x02\x01@\x02\x06prompts\x05models\0s\x04\0\x06prompt\x01\0\x04\
+\0\x15asterai:llm/llm@0.1.0\x05\x01\x04\0\x1basterai:llm/component@0.1.0\x04\0\x0b\
+\x0f\x01\0\x09component\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-c\
+omponent\x070.220.0\x10wit-bindgen-rust\x060.36.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
