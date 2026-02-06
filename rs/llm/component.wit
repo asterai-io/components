@@ -1,0 +1,11 @@
+package asterai:llm@0.1.0;
+
+interface llm {
+  greet: func(name: string);
+}
+
+world component {
+  import asterai:host/api@1.0.0;
+
+  export llm;
+}
