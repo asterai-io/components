@@ -1041,7 +1041,11 @@ pub mod exports {
                 pub trait Guest {
                     /// Sends a prompt to an LLM and returns the response.
                     /// Model format: "provider/model"
-                    /// (e.g. "openai/gpt-5-mini", "anthropic/claude-sonnet-4-20250514")
+                    /// Providers supported are openai, anthropic and mistral.
+                    /// Example model strings:
+                    /// - openai/gpt-5-mini
+                    /// - anthropic/claude-opus-4-6
+                    /// - mistral/mistral-large-latest
                     /// API keys are read from environment variables: OPENAI_KEY, ANTHROPIC_KEY, etc.
                     fn prompt(prompt: _rt::String, model: _rt::String) -> _rt::String;
                 }

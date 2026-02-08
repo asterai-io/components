@@ -35,10 +35,10 @@ pub fn prompt(prompt: &str, model: &str) -> String {
         Ok(key) => key,
         Err(_) => return "error: OPENAI_KEY is not set".to_string(),
     };
-    make_request(prompt, model, &api_key).unwrap_or_else(|e| format!("error: {e}"))
+    make_request(OPENAI_API_URL, prompt, model, &api_key).unwrap_or_else(|e| format!("error: {e}"))
 }
 
-fn make_request(prompt: &str, model: &str, api_key: &str) -> Result<String, String> {
+pub fn make_request(url: &str, prompt: &str, model: &str, api_key: &str) -> Result<String, String> {
     let request_body = ChatRequest {
         model,
         messages: vec![Message {
@@ -50,7 +50,7 @@ fn make_request(prompt: &str, model: &str, api_key: &str) -> Result<String, Stri
         serde_json::to_string(&request_body).map_err(|e| format!("failed to serialize: {e}"))?;
     let client = Client::new();
     let response = client
-        .post(OPENAI_API_URL)
+        .post(url)
         .header("Content-Type", "application/json")
         .header("Authorization", &format!("Bearer {api_key}"))
         .body(body_json.as_bytes())

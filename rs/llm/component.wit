@@ -3,7 +3,11 @@ package asterai:llm@1.0.0;
 interface llm {
   /// Sends a prompt to an LLM and returns the response.
   /// Model format: "provider/model"
-  /// (e.g. "openai/gpt-5-mini", "anthropic/claude-opus-4-6")
+  /// Providers supported are openai, anthropic and mistral.
+  /// Example model strings:
+  ///   - openai/gpt-5-mini
+  ///   - anthropic/claude-opus-4-6
+  ///   - mistral/mistral-large-latest
   /// API keys are read from environment variables: OPENAI_KEY, ANTHROPIC_KEY, etc.
   prompt: func(prompt: string, model: string) -> string;
 }
