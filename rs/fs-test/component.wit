@@ -1,0 +1,13 @@
+package asterai:fs-test@1.0.0;
+
+/// A simple filesystem test component.
+/// Reads a counter from a file, increments it, and writes it back.
+interface fs-test {
+  /// Increment a counter stored at `{dir}/counter.txt`.
+  /// Returns the new counter value.
+  increment-counter: func(dir: string) -> u64;
+}
+
+world component {
+  export fs-test;
+}
