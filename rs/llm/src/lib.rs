@@ -9,6 +9,7 @@ mod groq;
 mod mistral;
 mod openai;
 mod venice;
+mod xai;
 
 struct Component;
 
@@ -24,6 +25,7 @@ impl Guest for Component {
             "groq" => groq::prompt(&prompt, model_name),
             "google" => google::prompt(&prompt, model_name),
             "venice" => venice::prompt(&prompt, model_name),
+            "xai" => xai::prompt(&prompt, model_name),
             _ => format!("error: unsupported provider '{provider}'"),
         }
     }

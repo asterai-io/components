@@ -4,7 +4,7 @@ interface llm {
   /// Sends a prompt to an LLM and returns the response.
   /// Model format: "provider/model"
   /// The supported providers are:
-  ///   openai, anthropic, mistral, groq, google, and venice.
+  ///   openai, anthropic, mistral, groq, google, venice and xai.
   /// Example model strings:
   ///   - openai/gpt-5-mini
   ///   - anthropic/claude-opus-4-6
@@ -12,6 +12,7 @@ interface llm {
   ///   - groq/llama-3.1-8b-instant
   ///   - google/gemini-2.5-flash
   ///   - venice/kimi-k2-5
+  ///   - xai/grok-4-fast-reasoning
   /// API keys are read from environment variables: OPENAI_KEY, ANTHROPIC_KEY, etc.
   prompt: func(prompt: string, model: string) -> string;
 }
@@ -21,4 +22,3 @@ world component {
 
   export llm;
 }
-
