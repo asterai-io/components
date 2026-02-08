@@ -26,10 +26,68 @@ pub mod asterai {
                 }
             }
             #[derive(Clone)]
+            pub struct ParamInfo {
+                pub name: _rt::String,
+                pub type_name: _rt::String,
+                pub type_schema: _rt::String,
+            }
+            impl ::core::fmt::Debug for ParamInfo {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("ParamInfo")
+                        .field("name", &self.name)
+                        .field("type-name", &self.type_name)
+                        .field("type-schema", &self.type_schema)
+                        .finish()
+                }
+            }
+            #[derive(Clone)]
+            pub struct TypeInfo {
+                pub type_name: _rt::String,
+                pub type_schema: _rt::String,
+            }
+            impl ::core::fmt::Debug for TypeInfo {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("TypeInfo")
+                        .field("type-name", &self.type_name)
+                        .field("type-schema", &self.type_schema)
+                        .finish()
+                }
+            }
+            #[derive(Clone)]
+            pub struct FunctionInfo {
+                pub name: _rt::String,
+                pub interface_name: Option<_rt::String>,
+                pub description: Option<_rt::String>,
+                pub inputs: _rt::Vec<ParamInfo>,
+                pub output: Option<TypeInfo>,
+            }
+            impl ::core::fmt::Debug for FunctionInfo {
+                fn fmt(
+                    &self,
+                    f: &mut ::core::fmt::Formatter<'_>,
+                ) -> ::core::fmt::Result {
+                    f.debug_struct("FunctionInfo")
+                        .field("name", &self.name)
+                        .field("interface-name", &self.interface_name)
+                        .field("description", &self.description)
+                        .field("inputs", &self.inputs)
+                        .field("output", &self.output)
+                        .finish()
+                }
+            }
+            #[derive(Clone)]
             pub struct ComponentInfo {
                 pub name: _rt::String,
                 pub version: _rt::String,
                 pub interfaces: _rt::Vec<_rt::String>,
+                pub description: Option<_rt::String>,
+                pub functions: _rt::Vec<FunctionInfo>,
             }
             impl ::core::fmt::Debug for ComponentInfo {
                 fn fmt(
@@ -40,6 +98,8 @@ pub mod asterai {
                         .field("name", &self.name)
                         .field("version", &self.version)
                         .field("interfaces", &self.interfaces)
+                        .field("description", &self.description)
+                        .field("functions", &self.functions)
                         .finish()
                 }
             }
@@ -164,12 +224,12 @@ pub mod asterai {
                     wit_import(ptr0);
                     let l1 = *ptr0.add(0).cast::<*mut u8>();
                     let l2 = *ptr0.add(4).cast::<usize>();
-                    let base15 = l1;
-                    let len15 = l2;
-                    let mut result15 = _rt::Vec::with_capacity(len15);
-                    for i in 0..len15 {
-                        let base = base15.add(i * 24);
-                        let e15 = {
+                    let base52 = l1;
+                    let len52 = l2;
+                    let mut result52 = _rt::Vec::with_capacity(len52);
+                    for i in 0..len52 {
+                        let base = base52.add(i * 44);
+                        let e52 = {
                             let l3 = *base.add(0).cast::<*mut u8>();
                             let l4 = *base.add(4).cast::<usize>();
                             let len5 = l4;
@@ -199,16 +259,169 @@ pub mod asterai {
                                 result14.push(e14);
                             }
                             _rt::cabi_dealloc(base14, len14 * 8, 4);
+                            let l15 = i32::from(*base.add(24).cast::<u8>());
+                            let l19 = *base.add(36).cast::<*mut u8>();
+                            let l20 = *base.add(40).cast::<usize>();
+                            let base51 = l19;
+                            let len51 = l20;
+                            let mut result51 = _rt::Vec::with_capacity(len51);
+                            for i in 0..len51 {
+                                let base = base51.add(i * 60);
+                                let e51 = {
+                                    let l21 = *base.add(0).cast::<*mut u8>();
+                                    let l22 = *base.add(4).cast::<usize>();
+                                    let len23 = l22;
+                                    let bytes23 = _rt::Vec::from_raw_parts(
+                                        l21.cast(),
+                                        len23,
+                                        len23,
+                                    );
+                                    let l24 = i32::from(*base.add(8).cast::<u8>());
+                                    let l28 = i32::from(*base.add(20).cast::<u8>());
+                                    let l32 = *base.add(32).cast::<*mut u8>();
+                                    let l33 = *base.add(36).cast::<usize>();
+                                    let base43 = l32;
+                                    let len43 = l33;
+                                    let mut result43 = _rt::Vec::with_capacity(len43);
+                                    for i in 0..len43 {
+                                        let base = base43.add(i * 24);
+                                        let e43 = {
+                                            let l34 = *base.add(0).cast::<*mut u8>();
+                                            let l35 = *base.add(4).cast::<usize>();
+                                            let len36 = l35;
+                                            let bytes36 = _rt::Vec::from_raw_parts(
+                                                l34.cast(),
+                                                len36,
+                                                len36,
+                                            );
+                                            let l37 = *base.add(8).cast::<*mut u8>();
+                                            let l38 = *base.add(12).cast::<usize>();
+                                            let len39 = l38;
+                                            let bytes39 = _rt::Vec::from_raw_parts(
+                                                l37.cast(),
+                                                len39,
+                                                len39,
+                                            );
+                                            let l40 = *base.add(16).cast::<*mut u8>();
+                                            let l41 = *base.add(20).cast::<usize>();
+                                            let len42 = l41;
+                                            let bytes42 = _rt::Vec::from_raw_parts(
+                                                l40.cast(),
+                                                len42,
+                                                len42,
+                                            );
+                                            ParamInfo {
+                                                name: _rt::string_lift(bytes36),
+                                                type_name: _rt::string_lift(bytes39),
+                                                type_schema: _rt::string_lift(bytes42),
+                                            }
+                                        };
+                                        result43.push(e43);
+                                    }
+                                    _rt::cabi_dealloc(base43, len43 * 24, 4);
+                                    let l44 = i32::from(*base.add(40).cast::<u8>());
+                                    FunctionInfo {
+                                        name: _rt::string_lift(bytes23),
+                                        interface_name: match l24 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l25 = *base.add(12).cast::<*mut u8>();
+                                                    let l26 = *base.add(16).cast::<usize>();
+                                                    let len27 = l26;
+                                                    let bytes27 = _rt::Vec::from_raw_parts(
+                                                        l25.cast(),
+                                                        len27,
+                                                        len27,
+                                                    );
+                                                    _rt::string_lift(bytes27)
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                        description: match l28 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l29 = *base.add(24).cast::<*mut u8>();
+                                                    let l30 = *base.add(28).cast::<usize>();
+                                                    let len31 = l30;
+                                                    let bytes31 = _rt::Vec::from_raw_parts(
+                                                        l29.cast(),
+                                                        len31,
+                                                        len31,
+                                                    );
+                                                    _rt::string_lift(bytes31)
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                        inputs: result43,
+                                        output: match l44 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l45 = *base.add(44).cast::<*mut u8>();
+                                                    let l46 = *base.add(48).cast::<usize>();
+                                                    let len47 = l46;
+                                                    let bytes47 = _rt::Vec::from_raw_parts(
+                                                        l45.cast(),
+                                                        len47,
+                                                        len47,
+                                                    );
+                                                    let l48 = *base.add(52).cast::<*mut u8>();
+                                                    let l49 = *base.add(56).cast::<usize>();
+                                                    let len50 = l49;
+                                                    let bytes50 = _rt::Vec::from_raw_parts(
+                                                        l48.cast(),
+                                                        len50,
+                                                        len50,
+                                                    );
+                                                    TypeInfo {
+                                                        type_name: _rt::string_lift(bytes47),
+                                                        type_schema: _rt::string_lift(bytes50),
+                                                    }
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                    }
+                                };
+                                result51.push(e51);
+                            }
+                            _rt::cabi_dealloc(base51, len51 * 60, 4);
                             ComponentInfo {
                                 name: _rt::string_lift(bytes5),
                                 version: _rt::string_lift(bytes8),
                                 interfaces: result14,
+                                description: match l15 {
+                                    0 => None,
+                                    1 => {
+                                        let e = {
+                                            let l16 = *base.add(28).cast::<*mut u8>();
+                                            let l17 = *base.add(32).cast::<usize>();
+                                            let len18 = l17;
+                                            let bytes18 = _rt::Vec::from_raw_parts(
+                                                l16.cast(),
+                                                len18,
+                                                len18,
+                                            );
+                                            _rt::string_lift(bytes18)
+                                        };
+                                        Some(e)
+                                    }
+                                    _ => _rt::invalid_enum_discriminant(),
+                                },
+                                functions: result51,
                             }
                         };
-                        result15.push(e15);
+                        result52.push(e52);
                     }
-                    _rt::cabi_dealloc(base15, len15 * 24, 4);
-                    result15
+                    _rt::cabi_dealloc(base52, len52 * 44, 4);
+                    result52
                 }
             }
             #[allow(unused_unsafe, clippy::all)]
@@ -231,12 +444,12 @@ pub mod asterai {
                     wit_import(ptr0);
                     let l1 = *ptr0.add(0).cast::<*mut u8>();
                     let l2 = *ptr0.add(4).cast::<usize>();
-                    let base15 = l1;
-                    let len15 = l2;
-                    let mut result15 = _rt::Vec::with_capacity(len15);
-                    for i in 0..len15 {
-                        let base = base15.add(i * 24);
-                        let e15 = {
+                    let base52 = l1;
+                    let len52 = l2;
+                    let mut result52 = _rt::Vec::with_capacity(len52);
+                    for i in 0..len52 {
+                        let base = base52.add(i * 44);
+                        let e52 = {
                             let l3 = *base.add(0).cast::<*mut u8>();
                             let l4 = *base.add(4).cast::<usize>();
                             let len5 = l4;
@@ -266,24 +479,177 @@ pub mod asterai {
                                 result14.push(e14);
                             }
                             _rt::cabi_dealloc(base14, len14 * 8, 4);
+                            let l15 = i32::from(*base.add(24).cast::<u8>());
+                            let l19 = *base.add(36).cast::<*mut u8>();
+                            let l20 = *base.add(40).cast::<usize>();
+                            let base51 = l19;
+                            let len51 = l20;
+                            let mut result51 = _rt::Vec::with_capacity(len51);
+                            for i in 0..len51 {
+                                let base = base51.add(i * 60);
+                                let e51 = {
+                                    let l21 = *base.add(0).cast::<*mut u8>();
+                                    let l22 = *base.add(4).cast::<usize>();
+                                    let len23 = l22;
+                                    let bytes23 = _rt::Vec::from_raw_parts(
+                                        l21.cast(),
+                                        len23,
+                                        len23,
+                                    );
+                                    let l24 = i32::from(*base.add(8).cast::<u8>());
+                                    let l28 = i32::from(*base.add(20).cast::<u8>());
+                                    let l32 = *base.add(32).cast::<*mut u8>();
+                                    let l33 = *base.add(36).cast::<usize>();
+                                    let base43 = l32;
+                                    let len43 = l33;
+                                    let mut result43 = _rt::Vec::with_capacity(len43);
+                                    for i in 0..len43 {
+                                        let base = base43.add(i * 24);
+                                        let e43 = {
+                                            let l34 = *base.add(0).cast::<*mut u8>();
+                                            let l35 = *base.add(4).cast::<usize>();
+                                            let len36 = l35;
+                                            let bytes36 = _rt::Vec::from_raw_parts(
+                                                l34.cast(),
+                                                len36,
+                                                len36,
+                                            );
+                                            let l37 = *base.add(8).cast::<*mut u8>();
+                                            let l38 = *base.add(12).cast::<usize>();
+                                            let len39 = l38;
+                                            let bytes39 = _rt::Vec::from_raw_parts(
+                                                l37.cast(),
+                                                len39,
+                                                len39,
+                                            );
+                                            let l40 = *base.add(16).cast::<*mut u8>();
+                                            let l41 = *base.add(20).cast::<usize>();
+                                            let len42 = l41;
+                                            let bytes42 = _rt::Vec::from_raw_parts(
+                                                l40.cast(),
+                                                len42,
+                                                len42,
+                                            );
+                                            ParamInfo {
+                                                name: _rt::string_lift(bytes36),
+                                                type_name: _rt::string_lift(bytes39),
+                                                type_schema: _rt::string_lift(bytes42),
+                                            }
+                                        };
+                                        result43.push(e43);
+                                    }
+                                    _rt::cabi_dealloc(base43, len43 * 24, 4);
+                                    let l44 = i32::from(*base.add(40).cast::<u8>());
+                                    FunctionInfo {
+                                        name: _rt::string_lift(bytes23),
+                                        interface_name: match l24 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l25 = *base.add(12).cast::<*mut u8>();
+                                                    let l26 = *base.add(16).cast::<usize>();
+                                                    let len27 = l26;
+                                                    let bytes27 = _rt::Vec::from_raw_parts(
+                                                        l25.cast(),
+                                                        len27,
+                                                        len27,
+                                                    );
+                                                    _rt::string_lift(bytes27)
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                        description: match l28 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l29 = *base.add(24).cast::<*mut u8>();
+                                                    let l30 = *base.add(28).cast::<usize>();
+                                                    let len31 = l30;
+                                                    let bytes31 = _rt::Vec::from_raw_parts(
+                                                        l29.cast(),
+                                                        len31,
+                                                        len31,
+                                                    );
+                                                    _rt::string_lift(bytes31)
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                        inputs: result43,
+                                        output: match l44 {
+                                            0 => None,
+                                            1 => {
+                                                let e = {
+                                                    let l45 = *base.add(44).cast::<*mut u8>();
+                                                    let l46 = *base.add(48).cast::<usize>();
+                                                    let len47 = l46;
+                                                    let bytes47 = _rt::Vec::from_raw_parts(
+                                                        l45.cast(),
+                                                        len47,
+                                                        len47,
+                                                    );
+                                                    let l48 = *base.add(52).cast::<*mut u8>();
+                                                    let l49 = *base.add(56).cast::<usize>();
+                                                    let len50 = l49;
+                                                    let bytes50 = _rt::Vec::from_raw_parts(
+                                                        l48.cast(),
+                                                        len50,
+                                                        len50,
+                                                    );
+                                                    TypeInfo {
+                                                        type_name: _rt::string_lift(bytes47),
+                                                        type_schema: _rt::string_lift(bytes50),
+                                                    }
+                                                };
+                                                Some(e)
+                                            }
+                                            _ => _rt::invalid_enum_discriminant(),
+                                        },
+                                    }
+                                };
+                                result51.push(e51);
+                            }
+                            _rt::cabi_dealloc(base51, len51 * 60, 4);
                             ComponentInfo {
                                 name: _rt::string_lift(bytes5),
                                 version: _rt::string_lift(bytes8),
                                 interfaces: result14,
+                                description: match l15 {
+                                    0 => None,
+                                    1 => {
+                                        let e = {
+                                            let l16 = *base.add(28).cast::<*mut u8>();
+                                            let l17 = *base.add(32).cast::<usize>();
+                                            let len18 = l17;
+                                            let bytes18 = _rt::Vec::from_raw_parts(
+                                                l16.cast(),
+                                                len18,
+                                                len18,
+                                            );
+                                            _rt::string_lift(bytes18)
+                                        };
+                                        Some(e)
+                                    }
+                                    _ => _rt::invalid_enum_discriminant(),
+                                },
+                                functions: result51,
                             }
                         };
-                        result15.push(e15);
+                        result52.push(e52);
                     }
-                    _rt::cabi_dealloc(base15, len15 * 24, 4);
-                    result15
+                    _rt::cabi_dealloc(base52, len52 * 44, 4);
+                    result52
                 }
             }
             #[allow(unused_unsafe, clippy::all)]
             pub fn get_component(name: &str) -> Option<ComponentInfo> {
                 unsafe {
                     #[repr(align(4))]
-                    struct RetArea([::core::mem::MaybeUninit<u8>; 28]);
-                    let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 28]);
+                    struct RetArea([::core::mem::MaybeUninit<u8>; 48]);
+                    let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 48]);
                     let vec0 = name;
                     let ptr0 = vec0.as_ptr().cast::<u8>();
                     let len0 = vec0.len();
@@ -341,10 +707,163 @@ pub mod asterai {
                                     result14.push(e14);
                                 }
                                 _rt::cabi_dealloc(base14, len14 * 8, 4);
+                                let l15 = i32::from(*ptr1.add(28).cast::<u8>());
+                                let l19 = *ptr1.add(40).cast::<*mut u8>();
+                                let l20 = *ptr1.add(44).cast::<usize>();
+                                let base51 = l19;
+                                let len51 = l20;
+                                let mut result51 = _rt::Vec::with_capacity(len51);
+                                for i in 0..len51 {
+                                    let base = base51.add(i * 60);
+                                    let e51 = {
+                                        let l21 = *base.add(0).cast::<*mut u8>();
+                                        let l22 = *base.add(4).cast::<usize>();
+                                        let len23 = l22;
+                                        let bytes23 = _rt::Vec::from_raw_parts(
+                                            l21.cast(),
+                                            len23,
+                                            len23,
+                                        );
+                                        let l24 = i32::from(*base.add(8).cast::<u8>());
+                                        let l28 = i32::from(*base.add(20).cast::<u8>());
+                                        let l32 = *base.add(32).cast::<*mut u8>();
+                                        let l33 = *base.add(36).cast::<usize>();
+                                        let base43 = l32;
+                                        let len43 = l33;
+                                        let mut result43 = _rt::Vec::with_capacity(len43);
+                                        for i in 0..len43 {
+                                            let base = base43.add(i * 24);
+                                            let e43 = {
+                                                let l34 = *base.add(0).cast::<*mut u8>();
+                                                let l35 = *base.add(4).cast::<usize>();
+                                                let len36 = l35;
+                                                let bytes36 = _rt::Vec::from_raw_parts(
+                                                    l34.cast(),
+                                                    len36,
+                                                    len36,
+                                                );
+                                                let l37 = *base.add(8).cast::<*mut u8>();
+                                                let l38 = *base.add(12).cast::<usize>();
+                                                let len39 = l38;
+                                                let bytes39 = _rt::Vec::from_raw_parts(
+                                                    l37.cast(),
+                                                    len39,
+                                                    len39,
+                                                );
+                                                let l40 = *base.add(16).cast::<*mut u8>();
+                                                let l41 = *base.add(20).cast::<usize>();
+                                                let len42 = l41;
+                                                let bytes42 = _rt::Vec::from_raw_parts(
+                                                    l40.cast(),
+                                                    len42,
+                                                    len42,
+                                                );
+                                                ParamInfo {
+                                                    name: _rt::string_lift(bytes36),
+                                                    type_name: _rt::string_lift(bytes39),
+                                                    type_schema: _rt::string_lift(bytes42),
+                                                }
+                                            };
+                                            result43.push(e43);
+                                        }
+                                        _rt::cabi_dealloc(base43, len43 * 24, 4);
+                                        let l44 = i32::from(*base.add(40).cast::<u8>());
+                                        FunctionInfo {
+                                            name: _rt::string_lift(bytes23),
+                                            interface_name: match l24 {
+                                                0 => None,
+                                                1 => {
+                                                    let e = {
+                                                        let l25 = *base.add(12).cast::<*mut u8>();
+                                                        let l26 = *base.add(16).cast::<usize>();
+                                                        let len27 = l26;
+                                                        let bytes27 = _rt::Vec::from_raw_parts(
+                                                            l25.cast(),
+                                                            len27,
+                                                            len27,
+                                                        );
+                                                        _rt::string_lift(bytes27)
+                                                    };
+                                                    Some(e)
+                                                }
+                                                _ => _rt::invalid_enum_discriminant(),
+                                            },
+                                            description: match l28 {
+                                                0 => None,
+                                                1 => {
+                                                    let e = {
+                                                        let l29 = *base.add(24).cast::<*mut u8>();
+                                                        let l30 = *base.add(28).cast::<usize>();
+                                                        let len31 = l30;
+                                                        let bytes31 = _rt::Vec::from_raw_parts(
+                                                            l29.cast(),
+                                                            len31,
+                                                            len31,
+                                                        );
+                                                        _rt::string_lift(bytes31)
+                                                    };
+                                                    Some(e)
+                                                }
+                                                _ => _rt::invalid_enum_discriminant(),
+                                            },
+                                            inputs: result43,
+                                            output: match l44 {
+                                                0 => None,
+                                                1 => {
+                                                    let e = {
+                                                        let l45 = *base.add(44).cast::<*mut u8>();
+                                                        let l46 = *base.add(48).cast::<usize>();
+                                                        let len47 = l46;
+                                                        let bytes47 = _rt::Vec::from_raw_parts(
+                                                            l45.cast(),
+                                                            len47,
+                                                            len47,
+                                                        );
+                                                        let l48 = *base.add(52).cast::<*mut u8>();
+                                                        let l49 = *base.add(56).cast::<usize>();
+                                                        let len50 = l49;
+                                                        let bytes50 = _rt::Vec::from_raw_parts(
+                                                            l48.cast(),
+                                                            len50,
+                                                            len50,
+                                                        );
+                                                        TypeInfo {
+                                                            type_name: _rt::string_lift(bytes47),
+                                                            type_schema: _rt::string_lift(bytes50),
+                                                        }
+                                                    };
+                                                    Some(e)
+                                                }
+                                                _ => _rt::invalid_enum_discriminant(),
+                                            },
+                                        }
+                                    };
+                                    result51.push(e51);
+                                }
+                                _rt::cabi_dealloc(base51, len51 * 60, 4);
                                 ComponentInfo {
                                     name: _rt::string_lift(bytes5),
                                     version: _rt::string_lift(bytes8),
                                     interfaces: result14,
+                                    description: match l15 {
+                                        0 => None,
+                                        1 => {
+                                            let e = {
+                                                let l16 = *ptr1.add(32).cast::<*mut u8>();
+                                                let l17 = *ptr1.add(36).cast::<usize>();
+                                                let len18 = l17;
+                                                let bytes18 = _rt::Vec::from_raw_parts(
+                                                    l16.cast(),
+                                                    len18,
+                                                    len18,
+                                                );
+                                                _rt::string_lift(bytes18)
+                                            };
+                                            Some(e)
+                                        }
+                                        _ => _rt::invalid_enum_discriminant(),
+                                    },
+                                    functions: result51,
                                 }
                             };
                             Some(e)
@@ -520,23 +1039,27 @@ pub mod exports {
                     _rt::cabi_dealloc(l0, l1, 1);
                 }
                 pub trait Guest {
+                    /// Sends a prompt to an LLM and returns the response.
+                    /// Model format: "provider/model"
+                    /// (e.g. "openai/gpt-5-mini", "anthropic/claude-sonnet-4-20250514")
+                    /// API keys are read from environment variables: OPENAI_KEY, ANTHROPIC_KEY, etc.
                     fn prompt(prompt: _rt::String, model: _rt::String) -> _rt::String;
                 }
                 #[doc(hidden)]
-                macro_rules! __export_asterai_llm_llm_0_1_0_cabi {
+                macro_rules! __export_asterai_llm_llm_1_0_0_cabi {
                     ($ty:ident with_types_in $($path_to_types:tt)*) => {
-                        const _ : () = { #[export_name = "asterai:llm/llm@0.1.0#prompt"]
+                        const _ : () = { #[export_name = "asterai:llm/llm@1.0.0#prompt"]
                         unsafe extern "C" fn export_prompt(arg0 : * mut u8, arg1 : usize,
                         arg2 : * mut u8, arg3 : usize,) -> * mut u8 {
                         $($path_to_types)*:: _export_prompt_cabi::<$ty > (arg0, arg1,
                         arg2, arg3) } #[export_name =
-                        "cabi_post_asterai:llm/llm@0.1.0#prompt"] unsafe extern "C" fn
+                        "cabi_post_asterai:llm/llm@1.0.0#prompt"] unsafe extern "C" fn
                         _post_return_prompt(arg0 : * mut u8,) { $($path_to_types)*::
                         __post_return_prompt::<$ty > (arg0) } };
                     };
                 }
                 #[doc(hidden)]
-                pub(crate) use __export_asterai_llm_llm_0_1_0_cabi;
+                pub(crate) use __export_asterai_llm_llm_1_0_0_cabi;
                 #[repr(align(4))]
                 struct _RetArea([::core::mem::MaybeUninit<u8>; 8]);
                 static mut _RET_AREA: _RetArea = _RetArea(
@@ -613,31 +1136,35 @@ macro_rules! __export_component_impl {
     };
     ($ty:ident with_types_in $($path_to_types_root:tt)*) => {
         $($path_to_types_root)*::
-        exports::asterai::llm::llm::__export_asterai_llm_llm_0_1_0_cabi!($ty
+        exports::asterai::llm::llm::__export_asterai_llm_llm_1_0_0_cabi!($ty
         with_types_in $($path_to_types_root)*:: exports::asterai::llm::llm);
     };
 }
 #[doc(inline)]
 pub(crate) use __export_component_impl as export;
 #[cfg(target_arch = "wasm32")]
-#[link_section = "component-type:wit-bindgen:0.36.0:asterai:llm@0.1.0:component:encoded world"]
+#[link_section = "component-type:wit-bindgen:0.36.0:asterai:llm@1.0.0:component:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 743] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xe7\x04\x01A\x02\x01\
-A\x04\x01B\x17\x01r\x01\x07versions\x04\0\x0cruntime-info\x03\0\0\x01ps\x01r\x03\
-\x04names\x07versions\x0ainterfaces\x02\x04\0\x0ecomponent-info\x03\0\x03\x01m\x05\
-\x13component-not-found\x12function-not-found\x0cinvalid-args\x11invocation-fail\
-ed\x14serialization-failed\x04\0\x0fcall-error-kind\x03\0\x05\x01r\x02\x04kind\x06\
-\x07messages\x04\0\x0acall-error\x03\0\x07\x01@\0\0\x01\x04\0\x10get-runtime-inf\
-o\x01\x09\x01p\x04\x01@\0\0\x0a\x04\0\x0flist-components\x01\x0b\x04\0\x15list-o\
-ther-components\x01\x0b\x01k\x04\x01@\x01\x04names\0\x0c\x04\0\x0dget-component\x01\
-\x0d\x01@\x02\x0ecomponent-names\x0einterface-names\0\x7f\x04\0\x14component-imp\
-lements\x01\x0e\x01j\x01s\x01\x08\x01@\x03\x0ecomponent-names\x0dfunction-names\x09\
-args-jsons\0\x0f\x04\0\x17call-component-function\x01\x10\x03\0\x16asterai:host/\
-api@1.0.0\x05\0\x01B\x02\x01@\x02\x06prompts\x05models\0s\x04\0\x06prompt\x01\0\x04\
-\0\x15asterai:llm/llm@0.1.0\x05\x01\x04\0\x1basterai:llm/component@0.1.0\x04\0\x0b\
-\x0f\x01\0\x09component\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-c\
-omponent\x070.220.0\x10wit-bindgen-rust\x060.36.0";
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 943] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xaf\x06\x01A\x02\x01\
+A\x04\x01B!\x01r\x01\x07versions\x04\0\x0cruntime-info\x03\0\0\x01r\x03\x04names\
+\x09type-names\x0btype-schemas\x04\0\x0aparam-info\x03\0\x02\x01r\x02\x09type-na\
+mes\x0btype-schemas\x04\0\x09type-info\x03\0\x04\x01ks\x01p\x03\x01k\x05\x01r\x05\
+\x04names\x0einterface-name\x06\x0bdescription\x06\x06inputs\x07\x06output\x08\x04\
+\0\x0dfunction-info\x03\0\x09\x01ps\x01p\x0a\x01r\x05\x04names\x07versions\x0ain\
+terfaces\x0b\x0bdescription\x06\x09functions\x0c\x04\0\x0ecomponent-info\x03\0\x0d\
+\x01m\x05\x13component-not-found\x12function-not-found\x0cinvalid-args\x11invoca\
+tion-failed\x14serialization-failed\x04\0\x0fcall-error-kind\x03\0\x0f\x01r\x02\x04\
+kind\x10\x07messages\x04\0\x0acall-error\x03\0\x11\x01@\0\0\x01\x04\0\x10get-run\
+time-info\x01\x13\x01p\x0e\x01@\0\0\x14\x04\0\x0flist-components\x01\x15\x04\0\x15\
+list-other-components\x01\x15\x01k\x0e\x01@\x01\x04names\0\x16\x04\0\x0dget-comp\
+onent\x01\x17\x01@\x02\x0ecomponent-names\x0einterface-names\0\x7f\x04\0\x14comp\
+onent-implements\x01\x18\x01j\x01s\x01\x12\x01@\x03\x0ecomponent-names\x0dfuncti\
+on-names\x09args-jsons\0\x19\x04\0\x17call-component-function\x01\x1a\x03\0\x16a\
+sterai:host/api@1.0.0\x05\0\x01B\x02\x01@\x02\x06prompts\x05models\0s\x04\0\x06p\
+rompt\x01\0\x04\0\x15asterai:llm/llm@1.0.0\x05\x01\x04\0\x1basterai:llm/componen\
+t@1.0.0\x04\0\x0b\x0f\x01\0\x09component\x03\0\0\0G\x09producers\x01\x0cprocesse\
+d-by\x02\x0dwit-component\x070.220.0\x10wit-bindgen-rust\x060.36.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
