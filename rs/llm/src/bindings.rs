@@ -1039,15 +1039,6 @@ pub mod exports {
                     _rt::cabi_dealloc(l0, l1, 1);
                 }
                 pub trait Guest {
-                    /// Sends a prompt to an LLM and returns the response.
-                    /// Model format: "provider/model"
-                    /// The supported providers are:
-                    /// openai, anthropic, mistral, and groq.
-                    /// Example model strings:
-                    /// - openai/gpt-5-mini
-                    /// - anthropic/claude-opus-4-6
-                    /// - mistral/mistral-large-latest
-                    /// API keys are read from environment variables: OPENAI_KEY, ANTHROPIC_KEY, etc.
                     fn prompt(prompt: _rt::String, model: _rt::String) -> _rt::String;
                 }
                 #[doc(hidden)]

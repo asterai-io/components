@@ -4,6 +4,7 @@ use crate::bindings::exports::asterai::llm::llm::Guest;
 mod bindings;
 
 mod anthropic;
+mod google;
 mod groq;
 mod mistral;
 mod openai;
@@ -20,6 +21,7 @@ impl Guest for Component {
             "anthropic" => anthropic::prompt(&prompt, model_name),
             "mistral" => mistral::prompt(&prompt, model_name),
             "groq" => groq::prompt(&prompt, model_name),
+            "google" => google::prompt(&prompt, model_name),
             _ => format!("error: unsupported provider '{provider}'"),
         }
     }
