@@ -3,8 +3,9 @@ package asterai:llm@1.0.0;
 interface llm {
   /// Sends a prompt to an LLM and returns the response.
   /// Model format: "provider/model"
-  /// The supported providers are:
-  ///   openai, anthropic, mistral, groq, google, venice and xai.
+  /// Supported providers:
+  ///   openai, anthropic, mistral, groq, google, venice, xai,
+  ///   deepseek, together, fireworks, perplexity, openrouter.
   /// Example model strings:
   ///   - openai/gpt-5-mini
   ///   - anthropic/claude-opus-4-6
@@ -13,7 +14,15 @@ interface llm {
   ///   - google/gemini-2.5-flash
   ///   - venice/kimi-k2-5
   ///   - xai/grok-4-fast-reasoning
-  /// API keys are read from environment variables: OPENAI_KEY, ANTHROPIC_KEY, etc.
+  ///   - deepseek/deepseek-chat
+  ///   - together/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
+  ///   - fireworks/accounts/fireworks/models/llama-v3p1-70b-instruct
+  ///   - perplexity/sonar-pro
+  ///   - openrouter/anthropic/claude-sonnet-4
+  /// API keys are read from environment variables:
+  ///   OPENAI_KEY, ANTHROPIC_KEY, MISTRAL_KEY, GROQ_KEY, GOOGLE_KEY,
+  ///   VENICE_KEY, XAI_KEY, DEEPSEEK_KEY, TOGETHER_KEY, FIREWORKS_KEY,
+  ///   PERPLEXITY_KEY, OPENROUTER_KEY.
   prompt: func(prompt: string, model: string) -> string;
 }
 

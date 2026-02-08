@@ -4,10 +4,15 @@ use crate::bindings::exports::asterai::llm::llm::Guest;
 mod bindings;
 
 mod anthropic;
+mod deepseek;
+mod fireworks;
 mod google;
 mod groq;
 mod mistral;
 mod openai;
+mod openrouter;
+mod perplexity;
+mod together;
 mod venice;
 mod xai;
 
@@ -26,6 +31,11 @@ impl Guest for Component {
             "google" => google::prompt(&prompt, model_name),
             "venice" => venice::prompt(&prompt, model_name),
             "xai" => xai::prompt(&prompt, model_name),
+            "deepseek" => deepseek::prompt(&prompt, model_name),
+            "together" => together::prompt(&prompt, model_name),
+            "fireworks" => fireworks::prompt(&prompt, model_name),
+            "perplexity" => perplexity::prompt(&prompt, model_name),
+            "openrouter" => openrouter::prompt(&prompt, model_name),
             _ => format!("error: unsupported provider '{provider}'"),
         }
     }
