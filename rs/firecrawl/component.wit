@@ -1,0 +1,18 @@
+package asterai:firecrawl@0.1.0;
+
+interface firecrawl {
+  /// Scrapes a webpage and returns its content as markdown.
+  /// Requires the FIRECRAWL_KEY environment variable.
+  scrape: func(url: string) -> string;
+
+  /// Searches the web and returns results as a JSON array.
+  /// Each result contains url, title, and description fields.
+  /// Requires the FIRECRAWL_KEY environment variable.
+  search: func(query: string, limit: u32) -> string;
+}
+
+world component {
+  import asterai:host/api@1.0.0;
+
+  export firecrawl;
+}
