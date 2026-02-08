@@ -1041,7 +1041,8 @@ pub mod exports {
                 pub trait Guest {
                     /// Sends a prompt to an LLM and returns the response.
                     /// Model format: "provider/model"
-                    /// Providers supported are openai, anthropic and mistral.
+                    /// The supported providers are:
+                    /// openai, anthropic, mistral, and groq.
                     /// Example model strings:
                     /// - openai/gpt-5-mini
                     /// - anthropic/claude-opus-4-6
