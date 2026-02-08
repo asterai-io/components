@@ -1039,6 +1039,28 @@ pub mod exports {
                     _rt::cabi_dealloc(l0, l1, 1);
                 }
                 pub trait Guest {
+                    /// Sends a prompt to an LLM and returns the response.
+                    /// Model format: "provider/model"
+                    /// Supported providers:
+                    /// openai, anthropic, mistral, groq, google, venice, xai,
+                    /// deepseek, together, fireworks, perplexity, openrouter.
+                    /// Example model strings:
+                    /// - openai/gpt-5-mini
+                    /// - anthropic/claude-opus-4-6
+                    /// - mistral/mistral-large-latest
+                    /// - groq/llama-3.1-8b-instant
+                    /// - google/gemini-2.5-flash
+                    /// - venice/kimi-k2-5
+                    /// - xai/grok-4-fast-reasoning
+                    /// - deepseek/deepseek-chat
+                    /// - together/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo
+                    /// - fireworks/accounts/fireworks/models/llama-v3p1-70b-instruct
+                    /// - perplexity/sonar-pro
+                    /// - openrouter/anthropic/claude-sonnet-4
+                    /// API keys are read from environment variables:
+                    /// OPENAI_KEY, ANTHROPIC_KEY, MISTRAL_KEY, GROQ_KEY, GOOGLE_KEY,
+                    /// VENICE_KEY, XAI_KEY, DEEPSEEK_KEY, TOGETHER_KEY, FIREWORKS_KEY,
+                    /// PERPLEXITY_KEY, OPENROUTER_KEY.
                     fn prompt(prompt: _rt::String, model: _rt::String) -> _rt::String;
                 }
                 #[doc(hidden)]
