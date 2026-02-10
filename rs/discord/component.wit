@@ -1,9 +1,25 @@
 package asterai:discord@0.1.0;
 
+interface types {
+  record message {
+    content: string,
+    author: user,
+    id: string,
+    channel-id: string,
+  }
+
+  record user {
+    username: string,
+    id: string,
+  }
+}
+
+
 interface discord {
   send-message: func(content: string, channel-id: string) -> string;
 }
 
 world component {
   export discord;
+  export types;
 }

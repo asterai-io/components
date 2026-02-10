@@ -74,6 +74,20 @@ pub mod exports {
                     [::core::mem::MaybeUninit::uninit(); 8],
                 );
             }
+            #[allow(dead_code, clippy::all)]
+            pub mod types {
+                #[used]
+                #[doc(hidden)]
+                static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
+                #[doc(hidden)]
+                macro_rules! __export_asterai_discord_types_0_1_0_cabi {
+                    ($ty:ident with_types_in $($path_to_types:tt)*) => {
+                        const _ : () = {};
+                    };
+                }
+                #[doc(hidden)]
+                pub(crate) use __export_asterai_discord_types_0_1_0_cabi;
+            }
         }
     }
 }
@@ -128,6 +142,9 @@ macro_rules! __export_component_impl {
         $($path_to_types_root)*::
         exports::asterai::discord::discord::__export_asterai_discord_discord_0_1_0_cabi!($ty
         with_types_in $($path_to_types_root)*:: exports::asterai::discord::discord);
+        $($path_to_types_root)*::
+        exports::asterai::discord::types::__export_asterai_discord_types_0_1_0_cabi!($ty
+        with_types_in $($path_to_types_root)*:: exports::asterai::discord::types);
     };
 }
 #[doc(inline)]
@@ -135,12 +152,15 @@ pub(crate) use __export_component_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.36.0:asterai:discord@0.1.0:component:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 249] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07z\x01A\x02\x01A\x02\x01\
-B\x02\x01@\x02\x07contents\x0achannel-ids\0s\x04\0\x0csend-message\x01\0\x04\0\x1d\
-asterai:discord/discord@0.1.0\x05\0\x04\0\x1fasterai:discord/component@0.1.0\x04\
-\0\x0b\x0f\x01\0\x09component\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0d\
-wit-component\x070.220.0\x10wit-bindgen-rust\x060.36.0";
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 361] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xe9\x01\x01A\x02\x01\
+A\x04\x01B\x02\x01@\x02\x07contents\x0achannel-ids\0s\x04\0\x0csend-message\x01\0\
+\x04\0\x1dasterai:discord/discord@0.1.0\x05\0\x01B\x04\x01r\x02\x08usernames\x02\
+ids\x04\0\x04user\x03\0\0\x01r\x04\x07contents\x06author\x01\x02ids\x0achannel-i\
+ds\x04\0\x07message\x03\0\x02\x04\0\x1basterai:discord/types@0.1.0\x05\x01\x04\0\
+\x1fasterai:discord/component@0.1.0\x04\0\x0b\x0f\x01\0\x09component\x03\0\0\0G\x09\
+producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.220.0\x10wit-bindgen-rus\
+t\x060.36.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {
