@@ -5,7 +5,7 @@ use crate::bindings::exports::asterai::host_ws::incoming_handler::{
     ConnectionId, Guest as IncomingHandlerGuest,
 };
 use crate::bindings::exports::wasi::cli::run::Guest as RunGuest;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::env;
 use std::sync::Mutex;
 use crate::gateway_opcode::GatewayOpcode;
@@ -148,9 +148,12 @@ fn parse_targets() -> Result<Vec<String>, ()> {
 
 fn validate_targets(targets: &[String]) -> Result<(), ()> {
     for target in targets {
-        let is_valid = api::component_implements(target, "incoming-message");
+        let is_valid = api::component_implements(
+            target,
+            "asterai:discord-message-listener/incoming-handler@0.1.0",
+        );
         if !is_valid {
-            eprintln!("{target} does not implement incoming-message interface");
+            eprintln!("{target} does not implement incoming-handler interface");
             return Err(());
         }
     }
@@ -231,7 +234,7 @@ fn dispatch_message(state: &State, msg: &MessageData) {
     let args_str = args.to_string();
     for target in &state.targets {
         if let Err(e) =
-            api::call_component_function(target, "incoming-message/on-message", &args_str)
+            api::call_component_function(target, "incoming-handler/on-message", &args_str)
         {
             eprintln!("dispatch to {target} failed ({:?}): {}", e.kind, e.message);
         }

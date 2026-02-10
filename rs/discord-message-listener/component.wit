@@ -1,4 +1,4 @@
-package lorenzo:discord-message-listener@0.1.0;
+package asterai:discord-message-listener@0.1.0;
 
 interface incoming-handler {
   use asterai:discord/types@0.1.0.{message};
