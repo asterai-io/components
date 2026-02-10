@@ -1200,7 +1200,7 @@ pub mod exports {
     pub mod asterai {
         pub mod host_ws {
             #[allow(dead_code, clippy::all)]
-            pub mod incoming_message {
+            pub mod incoming_handler {
                 #[used]
                 #[doc(hidden)]
                 static __FORCE_SECTION_REF: fn() = super::super::super::super::__link_custom_section_describing_imports;
@@ -1251,25 +1251,25 @@ pub mod exports {
                     fn on_error(id: ConnectionId, message: _rt::String);
                 }
                 #[doc(hidden)]
-                macro_rules! __export_asterai_host_ws_incoming_message_0_1_0_cabi {
+                macro_rules! __export_asterai_host_ws_incoming_handler_0_1_0_cabi {
                     ($ty:ident with_types_in $($path_to_types:tt)*) => {
                         const _ : () = { #[export_name =
-                        "asterai:host-ws/incoming-message@0.1.0#on-message"] unsafe
+                        "asterai:host-ws/incoming-handler@0.1.0#on-message"] unsafe
                         extern "C" fn export_on_message(arg0 : i64, arg1 : * mut u8, arg2
                         : usize,) { $($path_to_types)*:: _export_on_message_cabi::<$ty >
                         (arg0, arg1, arg2) } #[export_name =
-                        "asterai:host-ws/incoming-message@0.1.0#on-close"] unsafe extern
+                        "asterai:host-ws/incoming-handler@0.1.0#on-close"] unsafe extern
                         "C" fn export_on_close(arg0 : i64, arg1 : i32, arg2 : * mut u8,
                         arg3 : usize,) { $($path_to_types)*:: _export_on_close_cabi::<$ty
                         > (arg0, arg1, arg2, arg3) } #[export_name =
-                        "asterai:host-ws/incoming-message@0.1.0#on-error"] unsafe extern
+                        "asterai:host-ws/incoming-handler@0.1.0#on-error"] unsafe extern
                         "C" fn export_on_error(arg0 : i64, arg1 : * mut u8, arg2 :
                         usize,) { $($path_to_types)*:: _export_on_error_cabi::<$ty >
                         (arg0, arg1, arg2) } };
                     };
                 }
                 #[doc(hidden)]
-                pub(crate) use __export_asterai_host_ws_incoming_message_0_1_0_cabi;
+                pub(crate) use __export_asterai_host_ws_incoming_handler_0_1_0_cabi;
             }
         }
     }
@@ -1399,9 +1399,9 @@ macro_rules! __export_component_impl {
     };
     ($ty:ident with_types_in $($path_to_types_root:tt)*) => {
         $($path_to_types_root)*::
-        exports::asterai::host_ws::incoming_message::__export_asterai_host_ws_incoming_message_0_1_0_cabi!($ty
+        exports::asterai::host_ws::incoming_handler::__export_asterai_host_ws_incoming_handler_0_1_0_cabi!($ty
         with_types_in $($path_to_types_root)*::
-        exports::asterai::host_ws::incoming_message); $($path_to_types_root)*::
+        exports::asterai::host_ws::incoming_handler); $($path_to_types_root)*::
         exports::wasi::cli::run::__export_wasi_cli_run_0_2_0_cabi!($ty with_types_in
         $($path_to_types_root)*:: exports::wasi::cli::run);
     };
@@ -1436,7 +1436,7 @@ g\x03\0\x04\x01j\x01\x01\x01s\x01@\x01\x06config\x05\0\x06\x04\0\x07connect\x01\
 \x0dconnection-id\x03\0\0\x01p}\x01@\x02\x02id\x01\x04data\x02\x01\0\x04\0\x0aon\
 -message\x01\x03\x01@\x03\x02id\x01\x04code{\x06reasons\x01\0\x04\0\x08on-close\x01\
 \x04\x01@\x02\x02id\x01\x07messages\x01\0\x04\0\x08on-error\x01\x05\x04\0&astera\
-i:host-ws/incoming-message@0.1.0\x05\x03\x01B\x03\x01j\0\0\x01@\0\0\0\x04\0\x03r\
+i:host-ws/incoming-handler@0.1.0\x05\x03\x01B\x03\x01j\0\0\x01@\0\0\0\x04\0\x03r\
 un\x01\x01\x04\0\x12wasi:cli/run@0.2.0\x05\x04\x04\00lorenzo:discord-message-lis\
 tener/component@0.1.0\x04\0\x0b\x0f\x01\0\x09component\x03\0\0\0G\x09producers\x01\
 \x0cprocessed-by\x02\x0dwit-component\x070.220.0\x10wit-bindgen-rust\x060.36.0";

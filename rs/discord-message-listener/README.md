@@ -11,7 +11,7 @@ On startup (`wasi:cli/run`):
 1. Reads the `DISCORD_LISTENER_TARGETS` environment variable
 2. Calls `asterai:host-ws/connection::connect` to open a WebSocket to the Discord Gateway (with `auto_reconnect: true`)
 
-When a Gateway message arrives, the runtime invokes the component's exported `asterai:host-ws/incoming-message::on-message` handler. The component parses the Discord event and fans it out to all configured consumer components via `asterai:host/api::call-component-function`.
+When a Gateway message arrives, the runtime invokes the component's exported `asterai:host-ws/incoming-handler::on-message` handler. The component parses the Discord event and fans it out to all configured consumer components via `asterai:host/api::call-component-function`.
 
 ## Dynamic dispatch with `DISCORD_LISTENER_TARGETS`
 
@@ -21,10 +21,10 @@ Consumer components are configured at deploy time through the `DISCORD_LISTENER_
 DISCORD_LISTENER_TARGETS="my-username:my-bot,my-username:my-logger"
 ```
 
-Each target must export the `incoming-message` interface:
+Each target must export the `incoming-handler` interface:
 
 ```wit
-interface incoming-message {
+interface incoming-handler {
   use asterai:discord/types@0.1.0.{message};
 
   on-message: func(message: message);
@@ -42,7 +42,7 @@ package my-username:my-bot@0.1.0;
 
 world component {
   import asterai:host/api@1.0.0;
-  export asterai:discord-message-listener/incoming-message@0.1.0;
+  export asterai:discord-message-listener/incoming-handler@0.1.0;
 }
 ```
 
