@@ -7,7 +7,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
-wit-bindgen-rt = { version = "0.39.0", features = ["bitflags"] }
+wit-bindgen = "0.52.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
@@ -20,8 +20,3 @@ opt-level = "s"
 debug = false
 strip = true
 lto = true
-
-[package.metadata.component]
-package = "asterai:discord-message-listener"
-
-[package.metadata.component.dependencies]

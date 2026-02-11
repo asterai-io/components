@@ -1,7 +1,13 @@
 use crate::bindings::exports::asterai::firecrawl::firecrawl::Guest;
 
 #[allow(warnings)]
-mod bindings;
+mod bindings {
+    wit_bindgen::generate!({
+        path: "wit/package.wasm",
+        world: "component",
+        generate_all,
+    });
+}
 
 mod scrape;
 mod search;

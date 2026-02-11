@@ -11,7 +11,13 @@ use std::sync::Mutex;
 use crate::gateway_opcode::GatewayOpcode;
 
 #[allow(warnings)]
-mod bindings;
+mod bindings {
+    wit_bindgen::generate!({
+        path: "wit/package.wasm",
+        world: "component",
+        generate_all,
+    });
+}
 mod gateway_opcode;
 
 struct Component;

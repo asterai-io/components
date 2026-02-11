@@ -1,7 +1,13 @@
 use crate::bindings::exports::asterai::llm::llm::Guest;
 
 #[allow(warnings)]
-mod bindings;
+mod bindings {
+    wit_bindgen::generate!({
+        path: "wit/package.wasm",
+        world: "component",
+        generate_all,
+    });
+}
 
 mod anthropic;
 mod deepseek;

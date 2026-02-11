@@ -3,7 +3,13 @@ use serde::Deserialize;
 use waki::Client;
 
 #[allow(warnings)]
-mod bindings;
+mod bindings {
+    wit_bindgen::generate!({
+        path: "wit/package.wasm",
+        world: "component",
+        generate_all,
+    });
+}
 
 struct Component;
 
