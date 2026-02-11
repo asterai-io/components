@@ -1409,7 +1409,7 @@ macro_rules! __export_component_impl {
 #[doc(inline)]
 pub(crate) use __export_component_impl as export;
 #[cfg(target_arch = "wasm32")]
-#[link_section = "component-type:wit-bindgen:0.36.0:lorenzo:discord-message-listener@0.1.0:component:encoded world"]
+#[link_section = "component-type:wit-bindgen:0.36.0:asterai:discord-message-listener@0.1.0:component:encoded world"]
 #[doc(hidden)]
 pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 1331] = *b"\
 \0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb3\x09\x01A\x02\x01\
@@ -1437,7 +1437,7 @@ g\x03\0\x04\x01j\x01\x01\x01s\x01@\x01\x06config\x05\0\x06\x04\0\x07connect\x01\
 -message\x01\x03\x01@\x03\x02id\x01\x04code{\x06reasons\x01\0\x04\0\x08on-close\x01\
 \x04\x01@\x02\x02id\x01\x07messages\x01\0\x04\0\x08on-error\x01\x05\x04\0&astera\
 i:host-ws/incoming-handler@0.1.0\x05\x03\x01B\x03\x01j\0\0\x01@\0\0\0\x04\0\x03r\
-un\x01\x01\x04\0\x12wasi:cli/run@0.2.0\x05\x04\x04\00lorenzo:discord-message-lis\
+un\x01\x01\x04\0\x12wasi:cli/run@0.2.0\x05\x04\x04\00asterai:discord-message-lis\
 tener/component@0.1.0\x04\0\x0b\x0f\x01\0\x09component\x03\0\0\0G\x09producers\x01\
 \x0cprocessed-by\x02\x0dwit-component\x070.220.0\x10wit-bindgen-rust\x060.36.0";
 #[inline(never)]

@@ -75,7 +75,6 @@ impl RunGuest for Component {
             headers: vec![],
             auto_reconnect: true,
         };
-        connection::connect(&config).map_err(|e| eprintln!("connection failed: {e}"))?;
         *STATE.lock().unwrap() = Some(State {
             targets,
             token,
@@ -84,6 +83,7 @@ impl RunGuest for Component {
             heartbeat_interval_ms: 0,
             messages_since_heartbeat: 0,
         });
+        connection::connect(&config).map_err(|e| eprintln!("connection failed: {e}"))?;
         Ok(())
     }
 }
