@@ -16,9 +16,9 @@ Returns the message ID on success, or `"error: ..."` on failure.
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DISCORD_TOKEN` | Yes | Discord bot token |
+| Variable        | Required | Description       |
+|-----------------|----------|-------------------|
+| `DISCORD_TOKEN` | Yes      | Discord bot token |
 
 ## Usage
 
