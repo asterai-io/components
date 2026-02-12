@@ -135,8 +135,7 @@ impl IncomingHandlerGuest for Component {
 }
 
 fn parse_handlers() -> Result<Vec<String>, ()> {
-    let raw = env::var(HANDLERS_ENV_NAME)
-        .map_err(|_| eprintln!("missing {HANDLERS_ENV_NAME} env var"))?;
+    let raw = env::var(HANDLERS_ENV_NAME).unwrap_or_default();
     let handlers: Vec<String> = raw
         .split(',')
         .map(|s| s.trim().to_owned())
