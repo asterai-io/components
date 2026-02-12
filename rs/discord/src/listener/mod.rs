@@ -127,6 +127,8 @@ impl IncomingHandlerGuest for Component {
         }
     }
 
+    fn on_open(_id: ConnectionId) { }
+
     fn on_close(_id: ConnectionId, _code: u16, _reason: String) {}
 
     fn on_error(_id: ConnectionId, message: String) {
