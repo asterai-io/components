@@ -143,10 +143,6 @@ fn parse_handlers() -> Result<Vec<String>, ()> {
         .map(|s| s.trim().to_owned())
         .filter(|s| !s.is_empty())
         .collect();
-    if handlers.is_empty() {
-        eprintln!("{HANDLERS_ENV_NAME} is empty");
-        return Err(());
-    }
     Ok(handlers)
 }
 
