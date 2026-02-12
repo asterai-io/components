@@ -13,6 +13,7 @@ mod gateway_opcode;
 static STATE: Mutex<Option<State>> = Mutex::new(None);
 
 const HANDLERS_ENV_NAME: &str = "DISCORD_INCOMING_HANDLER_COMPONENTS";
+const HANDLER_INTERFACE_NAME: &str = "asterai:discord/incoming-handler@0.1.0";
 // GUILD_MESSAGES | DIRECT_MESSAGES | MESSAGE_CONTENT
 const INTENTS: u64 = (1 << 9) | (1 << 12) | (1 << 15);
 const GATEWAY_URL: &str = "wss://gateway.discord.gg/?v=10&encoding=json";
@@ -90,8 +91,6 @@ pub fn initialise_ws_client() -> Result<(), ()> {
     Ok(())
 }
 
-
-
 impl IncomingHandlerGuest for Component {
     fn on_message(id: ConnectionId, data: Vec<u8>) {
         let text = match String::from_utf8(data) {
@@ -154,7 +153,7 @@ fn validate_handlers(handlers: &[String]) -> Result<(), ()> {
     for handler in handlers {
         let is_valid = api::component_implements(
             handler,
-            "asterai:discord-message-listener/incoming-handler@0.1.0",
+            HANDLER_INTERFACE_NAME,
         );
         if !is_valid {
             eprintln!("{handler} does not implement incoming-handler interface");
