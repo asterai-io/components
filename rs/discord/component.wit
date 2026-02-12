@@ -1,5 +1,6 @@
 package asterai:discord@0.1.0;
 
+/// Discord types.
 interface types {
   record message {
     content: string,
@@ -15,11 +16,28 @@ interface types {
 }
 
 
-interface discord {
+interface api {
   send-message: func(content: string, channel-id: string) -> string;
 }
 
+/// Incoming handler for listening to Discord messages.
+///
+/// Other components can implement this, and if they are included
+/// in the environment variable DISCORD_LISTENER_TARGETS then
+/// this component will call their `on-message` implementation
+/// whenever a Discord message event is received.
+/// Example: DISCORD_LISTENER_TARGETS="my-username:my-component,user:other-comp"
+interface incoming-handler {
+  use types.{message};
+
+  on-message: func(message: message);
+}
+
 world component {
-  export discord;
-  export types;
+  import asterai:host/api@1.0.0;
+  import asterai:host-ws/connection@0.1.0;
+
+  export api;
+  export wasi:cli/run@0.2.0;
+  export asterai:host-ws/incoming-handler@0.1.0;
 }
