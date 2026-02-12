@@ -2,7 +2,6 @@ use crate::bindings::asterai::host::api;
 use crate::bindings::asterai::host_ws::connection;
 use crate::bindings::asterai::host_ws::connection::{Config, ConnectionId};
 use crate::bindings::exports::asterai::host_ws::incoming_handler::Guest as IncomingHandlerGuest;
-use crate::bindings::exports::wasi::cli::run::Guest as RunGuest;
 use crate::listener::gateway_opcode::GatewayOpcode;
 use crate::Component;
 use serde::Deserialize;
@@ -59,29 +58,36 @@ struct ReadyData {
     session_id: String,
 }
 
-impl RunGuest for Component {
-    fn run() -> Result<(), ()> {
-        let targets = parse_targets()?;
-        validate_targets(&targets)?;
-        let token =
-            env::var("DISCORD_TOKEN").map_err(|_| eprintln!("missing DISCORD_TOKEN env var"))?;
-        let config = Config {
-            url: GATEWAY_URL.to_string(),
-            headers: vec![],
-            auto_reconnect: true,
-        };
-        *STATE.lock().unwrap() = Some(State {
-            targets,
-            token,
-            sequence: None,
-            session_id: None,
-            heartbeat_interval_ms: 0,
-            messages_since_heartbeat: 0,
-        });
-        connection::connect(&config).map_err(|e| eprintln!("connection failed: {e}"))?;
-        Ok(())
+pub fn initialise_ws_client() -> Result<(), ()> {
+    let targets = parse_targets()?;
+    if targets.is_empty() {
+        // There are no targets, so there's nothing to do.
+        // This returns before opening the client WS connection,
+        // so the listener part of the component ends here and
+        // will do nothing.
+        return Ok(());
     }
+    validate_targets(&targets)?;
+    let token =
+        env::var("DISCORD_TOKEN").map_err(|_| eprintln!("missing DISCORD_TOKEN env var"))?;
+    let config = Config {
+        url: GATEWAY_URL.to_string(),
+        headers: vec![],
+        auto_reconnect: true,
+    };
+    *STATE.lock().unwrap() = Some(State {
+        targets,
+        token,
+        sequence: None,
+        session_id: None,
+        heartbeat_interval_ms: 0,
+        messages_since_heartbeat: 0,
+    });
+    connection::connect(&config).map_err(|e| eprintln!("connection failed: {e}"))?;
+    Ok(())
 }
+
+
 
 impl IncomingHandlerGuest for Component {
     fn on_message(id: ConnectionId, data: Vec<u8>) {
