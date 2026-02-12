@@ -23,10 +23,10 @@ interface api {
 /// Incoming handler for listening to Discord messages.
 ///
 /// Other components can implement this, and if they are included
-/// in the environment variable DISCORD_LISTENER_TARGETS then
+/// in the environment variable DISCORD_INCOMING_HANDLER_COMPONENTS then
 /// this component will call their `on-message` implementation
 /// whenever a Discord message event is received.
-/// Example: DISCORD_LISTENER_TARGETS="my-username:my-component,user:other-comp"
+/// Example: DISCORD_INCOMING_HANDLER_COMPONENTS="my-username:my-component,user:other-comp"
 interface incoming-handler {
   use types.{message};
 

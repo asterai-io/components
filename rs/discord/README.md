@@ -21,10 +21,10 @@ interface incoming-handler {
 
 ## Environment Variables
 
-| Variable                   | Required | Description                                      |
-|----------------------------|----------|--------------------------------------------------|
-| `DISCORD_TOKEN`            | Yes      | Discord bot token                                |
-| `DISCORD_LISTENER_TARGETS` | No       | Comma-separated list of consumer component names |
+| Variable                              | Required | Description                                      |
+|---------------------------------------|----------|--------------------------------------------------|
+| `DISCORD_TOKEN`                       | Yes      | Discord bot token                                |
+| `DISCORD_INCOMING_HANDLER_COMPONENTS` | No       | Comma-separated list of consumer component names |
 
 ## Usage
 
@@ -40,10 +40,10 @@ asterai env call my-env asterai:discord api/send-message \
 
 ### Listening for messages
 
-The component connects to the Discord Gateway WebSocket on startup via `asterai:host-ws`. When a message arrives, it fans out to all components listed in `DISCORD_LISTENER_TARGETS`.
+The component connects to the Discord Gateway WebSocket on startup via `asterai:host-ws`. When a message arrives, it fans out to all components listed in `DISCORD_INCOMING_HANDLER_COMPONENTS`.
 
 ```bash
-asterai env set-var my-env DISCORD_LISTENER_TARGETS="my-username:my-bot,my-username:my-logger"
+asterai env set-var my-env DISCORD_INCOMING_HANDLER_COMPONENTS="my-username:my-bot,my-username:my-logger"
 ```
 
 Each target must export the `incoming-handler` interface:

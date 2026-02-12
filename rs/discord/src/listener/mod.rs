@@ -10,21 +10,24 @@ use std::sync::Mutex;
 
 mod gateway_opcode;
 
+static STATE: Mutex<Option<State>> = Mutex::new(None);
+
+const HANDLERS_ENV_NAME: &str = "DISCORD_INCOMING_HANDLER_COMPONENTS";
+// GUILD_MESSAGES | DIRECT_MESSAGES | MESSAGE_CONTENT
+const INTENTS: u64 = (1 << 9) | (1 << 12) | (1 << 15);
+const GATEWAY_URL: &str = "wss://gateway.discord.gg/?v=10&encoding=json";
+const HEARTBEAT_MSG_THRESHOLD: u32 = 5;
+
 struct State {
-    targets: Vec<String>,
+    /// Components that implement `incoming-handler` and are
+    /// subscribed (via the DISCORD_INCOMING_HANDLER_COMPONENTS env).
+    handlers: Vec<String>,
     token: String,
     sequence: Option<u64>,
     session_id: Option<String>,
     heartbeat_interval_ms: u64,
     messages_since_heartbeat: u32,
 }
-
-static STATE: Mutex<Option<State>> = Mutex::new(None);
-
-// GUILD_MESSAGES | DIRECT_MESSAGES | MESSAGE_CONTENT
-const INTENTS: u64 = (1 << 9) | (1 << 12) | (1 << 15);
-const GATEWAY_URL: &str = "wss://gateway.discord.gg/?v=10&encoding=json";
-const HEARTBEAT_MSG_THRESHOLD: u32 = 5;
 
 #[derive(Deserialize)]
 struct GatewayPayload {
@@ -59,15 +62,15 @@ struct ReadyData {
 }
 
 pub fn initialise_ws_client() -> Result<(), ()> {
-    let targets = parse_targets()?;
-    if targets.is_empty() {
-        // There are no targets, so there's nothing to do.
+    let handlers = parse_handlers()?;
+    if handlers.is_empty() {
+        // There are no handlers, so there's nothing to do.
         // This returns before opening the client WS connection,
         // so the listener part of the component ends here and
         // will do nothing.
         return Ok(());
     }
-    validate_targets(&targets)?;
+    validate_handlers(&handlers)?;
     let token =
         env::var("DISCORD_TOKEN").map_err(|_| eprintln!("missing DISCORD_TOKEN env var"))?;
     let config = Config {
@@ -76,7 +79,7 @@ pub fn initialise_ws_client() -> Result<(), ()> {
         auto_reconnect: true,
     };
     *STATE.lock().unwrap() = Some(State {
-        targets,
+        handlers,
         token,
         sequence: None,
         session_id: None,
@@ -132,29 +135,29 @@ impl IncomingHandlerGuest for Component {
     }
 }
 
-fn parse_targets() -> Result<Vec<String>, ()> {
-    let raw = env::var("DISCORD_LISTENER_TARGETS")
-        .map_err(|_| eprintln!("missing DISCORD_LISTENER_TARGETS env var"))?;
-    let targets: Vec<String> = raw
+fn parse_handlers() -> Result<Vec<String>, ()> {
+    let raw = env::var(HANDLERS_ENV_NAME)
+        .map_err(|_| eprintln!("missing {HANDLERS_ENV_NAME} env var"))?;
+    let handlers: Vec<String> = raw
         .split(',')
         .map(|s| s.trim().to_owned())
         .filter(|s| !s.is_empty())
         .collect();
-    if targets.is_empty() {
-        eprintln!("DISCORD_LISTENER_TARGETS is empty");
+    if handlers.is_empty() {
+        eprintln!("{HANDLERS_ENV_NAME} is empty");
         return Err(());
     }
-    Ok(targets)
+    Ok(handlers)
 }
 
-fn validate_targets(targets: &[String]) -> Result<(), ()> {
-    for target in targets {
+fn validate_handlers(handlers: &[String]) -> Result<(), ()> {
+    for handler in handlers {
         let is_valid = api::component_implements(
-            target,
+            handler,
             "asterai:discord-message-listener/incoming-handler@0.1.0",
         );
         if !is_valid {
-            eprintln!("{target} does not implement incoming-handler interface");
+            eprintln!("{handler} does not implement incoming-handler interface");
             return Err(());
         }
     }
@@ -233,11 +236,11 @@ fn dispatch_message(state: &State, msg: &MessageData) {
         "channel-id": msg.channel_id
     }]);
     let args_str = args.to_string();
-    for target in &state.targets {
+    for handler in &state.handlers {
         if let Err(e) =
-            api::call_component_function(target, "incoming-handler/on-message", &args_str)
+            api::call_component_function(handler, "incoming-handler/on-message", &args_str)
         {
-            eprintln!("dispatch to {target} failed ({:?}): {}", e.kind, e.message);
+            eprintln!("dispatch to {handler} failed ({:?}): {}", e.kind, e.message);
         }
     }
 }
