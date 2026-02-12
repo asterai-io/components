@@ -152,12 +152,14 @@ fn parse_handlers() -> Result<Vec<String>, ()> {
 
 fn validate_handlers(handlers: &[String]) -> Result<(), ()> {
     for handler in handlers {
-        let is_valid = api::component_implements(
-            handler,
-            HANDLER_INTERFACE_NAME,
-        );
-        if !is_valid {
-            eprintln!("{handler} does not implement incoming-handler interface");
+        let component = api::get_component(handler);
+        if component.is_none() {
+            eprintln!("{handler} not found in environment");
+            return Err(());
+        }
+        let has_interface = api::component_implements(handler, HANDLER_INTERFACE_NAME);
+        if !has_interface {
+            eprintln!("{handler} does not export {HANDLER_INTERFACE_NAME}");
             return Err(());
         }
     }
