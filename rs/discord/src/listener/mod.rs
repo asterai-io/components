@@ -117,11 +117,11 @@ impl IncomingHandlerGuest for Component {
                 handle_dispatch(state, payload.t, payload.d);
                 maybe_heartbeat(id, state);
             }
-            GatewayOpcode::Reconnect => connection::close(id),
+            GatewayOpcode::Reconnect => {}
             GatewayOpcode::InvalidSession => {
                 state.session_id = None;
                 state.sequence = None;
-                connection::close(id);
+                send_identify(id, state);
             }
             _ => {}
         }
@@ -186,22 +186,24 @@ fn handle_hello(id: ConnectionId, state: &mut State, data: Option<serde_json::Va
             });
             send_json(id, &resume);
         }
-        _ => {
-            let identify = serde_json::json!({
-                "op": GatewayOpcode::Identify,
-                "d": {
-                    "token": state.token,
-                    "intents": INTENTS,
-                    "properties": {
-                        "os": "linux",
-                        "browser": "asterai",
-                        "device": "asterai"
-                    }
-                }
-            });
-            send_json(id, &identify);
-        }
+        _ => send_identify(id, state),
     }
+}
+
+fn send_identify(id: ConnectionId, state: &State) {
+    let identify = serde_json::json!({
+        "op": GatewayOpcode::Identify,
+        "d": {
+            "token": state.token,
+            "intents": INTENTS,
+            "properties": {
+                "os": "linux",
+                "browser": "asterai",
+                "device": "asterai"
+            }
+        }
+    });
+    send_json(id, &identify);
 }
 
 fn handle_dispatch(state: &mut State, event: Option<String>, data: Option<serde_json::Value>) {
