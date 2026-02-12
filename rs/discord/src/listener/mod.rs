@@ -1,15 +1,13 @@
 use crate::bindings::asterai::host::api;
 use crate::bindings::asterai::host_ws::connection;
 use crate::bindings::asterai::host_ws::connection::{Config, ConnectionId};
-use crate::bindings::exports::asterai::host_ws::incoming_handler::{
-    Guest as IncomingHandlerGuest,
-};
+use crate::bindings::exports::asterai::host_ws::incoming_handler::Guest as IncomingHandlerGuest;
 use crate::bindings::exports::wasi::cli::run::Guest as RunGuest;
+use crate::listener::gateway_opcode::GatewayOpcode;
+use crate::Component;
 use serde::Deserialize;
 use std::env;
 use std::sync::Mutex;
-use crate::{Component};
-use crate::listener::gateway_opcode::GatewayOpcode;
 
 mod gateway_opcode;
 

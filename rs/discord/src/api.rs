@@ -1,7 +1,7 @@
 use crate::bindings::exports::asterai::discord::api::Guest;
+use crate::Component;
 use serde::Deserialize;
 use waki::Client;
-use crate::{Component};
 
 impl Guest for Component {
     fn send_message(content: String, channel_id: String) -> String {
@@ -15,8 +15,7 @@ struct MessageResponse {
 }
 
 fn send_message_inner(content: &str, channel_id: &str) -> Result<String, String> {
-    let token =
-        std::env::var("DISCORD_TOKEN").map_err(|_| "DISCORD_TOKEN env var is required")?;
+    let token = std::env::var("DISCORD_TOKEN").map_err(|_| "DISCORD_TOKEN env var is required")?;
     let url = format!("https://discord.com/api/v10/channels/{channel_id}/messages");
     let body = serde_json::json!({ "content": content });
     let body_str = serde_json::to_string(&body).map_err(|e| e.to_string())?;
