@@ -13,9 +13,9 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/github/license/asterai-io/asterai-components?color=blue)](https://github.com/asterai-io/components/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/asterai-io/components?color=blue)](https://github.com/asterai-io/components/blob/master/LICENSE)
 [![Discord](https://img.shields.io/discord/1260408236578832475?label=discord&color=7289da)](https://asterai.io/discord)
-[![GitHub stars](https://img.shields.io/github/stars/asterai-io/asterai-components)](https://github.com/asterai-io/components)
+[![GitHub stars](https://img.shields.io/github/stars/asterai-io/components)](https://github.com/asterai-io/components)
 [![X Follow](https://img.shields.io/twitter/follow/asterai_io)](https://x.com/asterai_io)
 
 </div>
