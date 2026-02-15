@@ -48,6 +48,12 @@ or `"error: ..."` on failure.
    your asterai environment receives HTTP requests.
    Set it as `TELEGRAM_WEBHOOK_URL`
    (e.g. `https://your-domain.com/webhook`).
+   Note this step only requires setting the ENV var,
+   no setup is needed on Telegram's side other than
+   getting the TELEGRAM_TOKEN.
+   The component automatically calls Telegram's
+   `setWebhook` API on startup to register the URL
+   and secret.
 
 3. **Choose a webhook secret** — pick any random string
    (e.g. `openssl rand -hex 32`). Telegram will include
@@ -60,10 +66,6 @@ or `"error: ..."` on failure.
    `TELEGRAM_INCOMING_HANDLER_COMPONENTS` to a
    comma-separated list of components that implement
    `asterai:telegram/incoming-handler@0.1.0`.
-
-The component automatically calls Telegram's
-`setWebhook` API on startup to register the URL
-and secret.
 
 ## Usage
 
