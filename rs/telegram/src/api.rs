@@ -21,7 +21,7 @@ impl Guest for Component {
     }
 
     fn send_message(content: String, chat_id: i64) -> String {
-        send_message_inner(&content, chat_id).unwrap_or_else(|e| format!("error: {e}"))
+        send_message(&content, chat_id).unwrap_or_else(|e| format!("error: {e}"))
     }
 }
 
@@ -68,7 +68,7 @@ fn fetch_self() -> Result<UserResponse, String> {
     resp.result.ok_or_else(|| "missing result".into())
 }
 
-fn send_message_inner(content: &str, chat_id: i64) -> Result<String, String> {
+fn send_message(content: &str, chat_id: i64) -> Result<String, String> {
     let body = serde_json::json!({
         "chat_id": chat_id,
         "text": content,
