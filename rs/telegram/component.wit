@@ -1,0 +1,45 @@
+package asterai:telegram@0.1.0;
+
+/// Telegram types.
+interface types {
+  record message {
+    content: string,
+    sender: user,
+    id: s64,
+    chat-id: s64,
+  }
+
+  record user {
+    username: string,
+    id: s64,
+  }
+}
+
+interface api {
+  use types.{user};
+
+  get-self: func() -> user;
+  send-message: func(content: string, chat-id: s64) -> string;
+}
+
+/// Incoming handler for listening to Telegram messages.
+///
+/// Other components can implement this, and if they are included
+/// in the environment variable TELEGRAM_INCOMING_HANDLER_COMPONENTS then
+/// this component will call their `on-message` implementation
+/// whenever a Telegram message event is received.
+/// Example: TELEGRAM_INCOMING_HANDLER_COMPONENTS="my-username:my-component,user:other-comp"
+interface incoming-handler {
+  use types.{message};
+
+  on-message: func(message: message);
+}
+
+world component {
+  import asterai:host/api@1.0.0;
+
+  export api;
+  export types;
+  export wasi:cli/run@0.2.0;
+  export wasi:http/incoming-handler@0.2.0;
+}
