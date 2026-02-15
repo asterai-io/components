@@ -5,16 +5,18 @@ use crate::bindings::wasi::http::types::{
     Fields, IncomingBody, IncomingRequest, OutgoingBody, OutgoingResponse, ResponseOutparam,
 };
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use std::env;
 use std::sync::LazyLock;
 
 const HANDLERS_ENV_NAME: &str = "TELEGRAM_INCOMING_HANDLER_COMPONENTS";
 const HANDLER_INTERFACE_NAME: &str = "asterai:telegram/incoming-handler@0.1.0";
 
-static WEBHOOK_SECRET: LazyLock<Option<String>> = LazyLock::new(|| {
-    env::var("TELEGRAM_WEBHOOK_SECRET")
-        .ok()
-        .filter(|s| !s.is_empty())
+static WEBHOOK_SECRET: LazyLock<String> = LazyLock::new(|| {
+    let token = crate::api::token();
+    let salt = env!("WEBHOOK_SALT");
+    let hash = Sha256::digest(format!("{salt}:{token}"));
+    format!("{hash:x}")
 });
 
 #[derive(Deserialize)]
@@ -38,12 +40,10 @@ impl HttpGuest for Component {
 }
 
 fn verify_secret(request: &IncomingRequest) -> bool {
-    let Some(expected_secret) = WEBHOOK_SECRET.as_deref() else {
-        return false;
-    };
+    let expected = WEBHOOK_SECRET.as_bytes();
     let headers = request.headers();
     let values = headers.get("x-telegram-bot-api-secret-token");
-    values.iter().any(|v| v.as_slice() == expected_secret.as_bytes())
+    values.iter().any(|v| v.as_slice() == expected)
 }
 
 fn read_request_body(request: &IncomingRequest) -> Option<String> {
@@ -181,13 +181,12 @@ pub fn validate_handlers(handlers: &[String]) -> Result<(), ()> {
 pub fn setup_webhook() -> Result<(), ()> {
     let webhook_url = env::var("TELEGRAM_WEBHOOK_URL")
         .map_err(|_| eprintln!("missing TELEGRAM_WEBHOOK_URL env var"))?;
-    let webhook_secret = env::var("TELEGRAM_WEBHOOK_SECRET")
-        .map_err(|_| eprintln!("missing TELEGRAM_WEBHOOK_SECRET env var"))?;
     let token = crate::api::token();
+    let secret = &*WEBHOOK_SECRET;
     let url = format!("https://api.telegram.org/bot{token}/setWebhook");
     let body = serde_json::json!({
         "url": webhook_url,
-        "secret_token": webhook_secret,
+        "secret_token": secret,
     });
     let body_str = serde_json::to_string(&body).map_err(|e| eprintln!("json error: {e}"))?;
     let response = waki::Client::new()
