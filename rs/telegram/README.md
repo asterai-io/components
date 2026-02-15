@@ -47,7 +47,7 @@ or `"error: ..."` on failure.
    HTTPS URL to send updates to. This is the URL where
    your asterai environment receives HTTP requests.
    Set it as `TELEGRAM_WEBHOOK_URL`
-   (e.g. `https://your-domain.com/webhook`).
+   (e.g. `https://your-domain.com/your-username/your-env-name/asterai/telegram/webhook`).
    Note this step only requires setting the ENV var,
    no setup is needed on Telegram's side other than
    getting the TELEGRAM_TOKEN.
