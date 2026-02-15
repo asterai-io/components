@@ -43,7 +43,7 @@ or `"error: ..."` on failure.
    token it gives you.
    Set it as `TELEGRAM_TOKEN`.
 
-2. **Set up a webhook URL** — Telegram needs a public
+2. **Set up a webhook URL ENV var** — Telegram needs a public
    HTTPS URL to send updates to. This is the URL where
    your asterai environment receives HTTP requests.
    Set it as `TELEGRAM_WEBHOOK_URL`
