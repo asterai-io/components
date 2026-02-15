@@ -76,7 +76,7 @@ asterai env add-component my-env asterai:telegram
 asterai env set-var my-env \
   TELEGRAM_TOKEN="your-bot-token"
 asterai env set-var my-env \
-  TELEGRAM_WEBHOOK_URL="https://your-domain.com/webhook"
+  TELEGRAM_WEBHOOK_URL="https://your-domain.com/your-username/your-env-name/asterai/telegram/webhook"
 asterai env set-var my-env \
   TELEGRAM_WEBHOOK_SECRET="your-secret"
 
