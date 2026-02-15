@@ -6,9 +6,16 @@ use crate::bindings::wasi::http::types::{
 };
 use serde::Deserialize;
 use std::env;
+use std::sync::LazyLock;
 
 const HANDLERS_ENV_NAME: &str = "TELEGRAM_INCOMING_HANDLER_COMPONENTS";
 const HANDLER_INTERFACE_NAME: &str = "asterai:telegram/incoming-handler@0.1.0";
+
+static WEBHOOK_SECRET: LazyLock<Option<String>> = LazyLock::new(|| {
+    env::var("TELEGRAM_WEBHOOK_SECRET")
+        .ok()
+        .filter(|s| !s.is_empty())
+});
 
 #[derive(Deserialize)]
 struct SetWebhookResponse {
@@ -18,12 +25,25 @@ struct SetWebhookResponse {
 
 impl HttpGuest for Component {
     fn handle(request: IncomingRequest, response_out: ResponseOutparam) {
+        if !verify_secret(&request) {
+            respond_unauthorized(response_out);
+            return;
+        }
         let body = read_request_body(&request);
         if let Some(body) = body {
             handle_update(&body);
         }
         respond_ok(response_out);
     }
+}
+
+fn verify_secret(request: &IncomingRequest) -> bool {
+    let Some(expected_secret) = WEBHOOK_SECRET.as_deref() else {
+        return false;
+    };
+    let headers = request.headers();
+    let values = headers.get("x-telegram-bot-api-secret-token");
+    values.iter().any(|v| v.as_slice() == expected_secret.as_bytes())
 }
 
 fn read_request_body(request: &IncomingRequest) -> Option<String> {
@@ -44,6 +64,15 @@ fn read_request_body(request: &IncomingRequest) -> Option<String> {
     drop(stream);
     IncomingBody::finish(incoming_body);
     String::from_utf8(buf).ok()
+}
+
+fn respond_unauthorized(response_out: ResponseOutparam) {
+    let headers = Fields::new();
+    let response = OutgoingResponse::new(headers);
+    response.set_status_code(401).unwrap();
+    let body = response.body().unwrap();
+    ResponseOutparam::set(response_out, Ok(response));
+    OutgoingBody::finish(body, None).unwrap();
 }
 
 fn respond_ok(response_out: ResponseOutparam) {
