@@ -32,8 +32,13 @@ or `"error: ..."` on failure.
 |----------------------------------------|----------|--------------------------------------------------|
 | `TELEGRAM_TOKEN`                       | Yes      | Bot token from BotFather                         |
 | `TELEGRAM_WEBHOOK_URL`                 | Yes      | Public URL for receiving webhook updates         |
-| `TELEGRAM_WEBHOOK_SECRET`              | Yes      | Secret token for validating webhook requests     |
 | `TELEGRAM_INCOMING_HANDLER_COMPONENTS` | No       | Comma-separated list of consumer component names |
+
+The webhook secret is auto-generated from the bot
+token at build time — no manual configuration needed.
+Incoming webhook requests are verified against this
+secret via the `X-Telegram-Bot-Api-Secret-Token`
+header.
 
 ### Setup
 
@@ -43,7 +48,7 @@ or `"error: ..."` on failure.
    token it gives you.
    Set it as `TELEGRAM_TOKEN`.
 
-2. **Set up a webhook URL ENV var** — Telegram needs a public
+2. **Set up a webhook URL** — Telegram needs a public
    HTTPS URL to send updates to. This is the URL where
    your asterai environment receives HTTP requests.
    Set it as `TELEGRAM_WEBHOOK_URL`
@@ -55,13 +60,7 @@ or `"error: ..."` on failure.
    `setWebhook` API on startup to register the URL
    and secret.
 
-3. **Choose a webhook secret** — pick any random string
-   (e.g. `openssl rand -hex 32`). Telegram will include
-   this in the `X-Telegram-Bot-Api-Secret-Token` header
-   on every webhook request so the component can verify
-   it. Set it as `TELEGRAM_WEBHOOK_SECRET`.
-
-4. **Configure handler components** (optional) — if you
+3. **Configure handler components** (optional) — if you
    want to listen for incoming messages, set
    `TELEGRAM_INCOMING_HANDLER_COMPONENTS` to a
    comma-separated list of components that implement
@@ -77,8 +76,6 @@ asterai env set-var my-env \
   TELEGRAM_TOKEN="your-bot-token"
 asterai env set-var my-env \
   TELEGRAM_WEBHOOK_URL="https://your-domain.com/your-username/your-env-name/asterai/telegram/webhook"
-asterai env set-var my-env \
-  TELEGRAM_WEBHOOK_SECRET="your-secret"
 
 asterai env call my-env asterai:telegram \
   api/send-message "Hello from asterai!" 123456789
@@ -92,8 +89,8 @@ it fans out to all components listed in
 `TELEGRAM_INCOMING_HANDLER_COMPONENTS`.
 
 If `TELEGRAM_INCOMING_HANDLER_COMPONENTS` is not set, this
-component will be able to send Telegram messages but not
-listen and reply to messages sent by users.
+component will be able to send Telegram messages but will not
+be able to listen and reply to messages sent by users on Telegram.
 
 ```bash
 asterai env set-var my-env \
