@@ -6,7 +6,6 @@ use crate::bindings::wasi::http::types::{
 };
 use serde::Deserialize;
 use std::env;
-use std::sync::Mutex;
 
 pub struct Component;
 
@@ -24,17 +23,16 @@ mod bindings {
 const HANDLERS_ENV_NAME: &str = "TELEGRAM_INCOMING_HANDLER_COMPONENTS";
 const HANDLER_INTERFACE_NAME: &str = "asterai:telegram/incoming-handler@0.1.0";
 
-static HANDLERS: Mutex<Vec<String>> = Mutex::new(Vec::new());
-
 impl RunGuest for Component {
     fn run() -> Result<(), ()> {
         let handlers = parse_handlers();
         if handlers.is_empty() {
+            println!("telegram: no handlers configured, send-only mode");
             return Ok(());
         }
-        validate_handlers(&handlers)?;
+        validate_handlers(&handlers).ok();
         setup_webhook()?;
-        *HANDLERS.lock().unwrap() = handlers;
+        println!("telegram: ready");
         Ok(())
     }
 }
@@ -106,7 +104,7 @@ struct ChatData {
 fn handle_update(body: &str) {
     let update: Update = match serde_json::from_str(body) {
         Ok(u) => u,
-        Err(e) => return eprintln!("invalid update: {e}"),
+        Err(e) => return eprintln!("telegram: invalid update: {e}"),
     };
     let Some(msg) = update.message else {
         return;
@@ -119,11 +117,14 @@ fn handle_update(body: &str) {
         .and_then(|f| f.username.clone())
         .unwrap_or_else(|| from.map(|f| f.first_name.clone()).unwrap_or_default());
     let user_id = from.map(|f| f.id).unwrap_or(0);
-
     dispatch_message(&text, &username, user_id, msg.message_id, msg.chat.id);
 }
 
 fn dispatch_message(content: &str, username: &str, user_id: i64, message_id: i64, chat_id: i64) {
+    let handlers = parse_handlers();
+    if handlers.is_empty() {
+        return;
+    }
     let args = serde_json::json!([{
         "content": content,
         "sender": {
@@ -134,12 +135,13 @@ fn dispatch_message(content: &str, username: &str, user_id: i64, message_id: i64
         "chat-id": chat_id,
     }]);
     let args_str = args.to_string();
-    let handlers = HANDLERS.lock().unwrap();
-    for handler in handlers.iter() {
-        if let Err(e) =
-            api::call_component_function(handler, "incoming-handler/on-message", &args_str)
-        {
-            eprintln!("dispatch to {handler} failed ({:?}): {}", e.kind, e.message);
+    for handler in handlers {
+        match api::call_component_function(&handler, "incoming-handler/on-message", &args_str) {
+            Ok(_) => {}
+            Err(e) => eprintln!(
+                "telegram: dispatch to {handler} failed ({:?}): {}",
+                e.kind, e.message
+            ),
         }
     }
 }
@@ -169,10 +171,10 @@ fn validate_handlers(handlers: &[String]) -> Result<(), ()> {
 }
 
 fn setup_webhook() -> Result<(), ()> {
-    let webhook_url =
-        env::var("TELEGRAM_WEBHOOK_URL").map_err(|_| eprintln!("missing TELEGRAM_WEBHOOK_URL env var"))?;
-    let webhook_secret =
-        env::var("TELEGRAM_WEBHOOK_SECRET").map_err(|_| eprintln!("missing TELEGRAM_WEBHOOK_SECRET env var"))?;
+    let webhook_url = env::var("TELEGRAM_WEBHOOK_URL")
+        .map_err(|_| eprintln!("missing TELEGRAM_WEBHOOK_URL env var"))?;
+    let webhook_secret = env::var("TELEGRAM_WEBHOOK_SECRET")
+        .map_err(|_| eprintln!("missing TELEGRAM_WEBHOOK_SECRET env var"))?;
     let token = api_impl::token();
     let url = format!("https://api.telegram.org/bot{token}/setWebhook");
     let body = serde_json::json!({
@@ -197,8 +199,8 @@ fn setup_webhook() -> Result<(), ()> {
         description: Option<String>,
     }
 
-    let resp: SetWebhookResponse =
-        serde_json::from_str(&text).map_err(|e| eprintln!("parse setWebhook response failed: {e}: {text}"))?;
+    let resp: SetWebhookResponse = serde_json::from_str(&text)
+        .map_err(|e| eprintln!("parse setWebhook response failed: {e}: {text}"))?;
     if !resp.ok {
         eprintln!(
             "setWebhook failed: {}",

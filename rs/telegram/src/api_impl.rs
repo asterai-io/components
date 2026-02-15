@@ -1,15 +1,14 @@
+use crate::Component;
 use crate::bindings::exports::asterai::telegram::api::Guest;
 use crate::bindings::exports::asterai::telegram::types::User;
-use crate::Component;
 use serde::Deserialize;
 use std::sync::{LazyLock, OnceLock};
 use waki::Client;
 
 const API_BASE: &str = "https://api.telegram.org/bot";
 
-static TOKEN: LazyLock<String> = LazyLock::new(|| {
-    std::env::var("TELEGRAM_TOKEN").expect("TELEGRAM_TOKEN env var is required")
-});
+static TOKEN: LazyLock<String> =
+    LazyLock::new(|| std::env::var("TELEGRAM_TOKEN").expect("TELEGRAM_TOKEN env var is required"));
 static SELF_USER: OnceLock<UserResponse> = OnceLock::new();
 
 impl Guest for Component {
