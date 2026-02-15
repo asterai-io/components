@@ -91,6 +91,10 @@ Telegram via `setWebhook`. When a message arrives,
 it fans out to all components listed in
 `TELEGRAM_INCOMING_HANDLER_COMPONENTS`.
 
+If `TELEGRAM_INCOMING_HANDLER_COMPONENTS` is not set, this
+component will be able to send Telegram messages but not
+listen and reply to messages sent by users.
+
 ```bash
 asterai env set-var my-env \
   TELEGRAM_INCOMING_HANDLER_COMPONENTS=\
