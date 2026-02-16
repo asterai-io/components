@@ -10,8 +10,8 @@ Cloud API using webhooks.
 |----------------------------------------|----------|--------------------------------------------------|
 | `WHATSAPP_ACCESS_TOKEN`                | Yes      | Permanent access token from Meta                 |
 | `WHATSAPP_PHONE_NUMBER_ID`             | Yes      | Phone number ID from Meta dashboard              |
+| `WHATSAPP_APP_SECRET`                  | Yes      | App Secret from Meta dashboard                   |
 | `WHATSAPP_WEBHOOK_VERIFY_TOKEN`        | Yes      | Token you choose for webhook verification        |
-| `WHATSAPP_WEBHOOK_URL`                 | Yes      | Public URL for receiving webhook updates         |
 | `WHATSAPP_INCOMING_HANDLER_COMPONENTS` | No       | Comma-separated list of consumer component names |
 
 ## Setup
@@ -59,31 +59,35 @@ The token shown on the API Setup page is temporary
    - `whatsapp_business_manage_events`
 5. Copy the token. Set it as `WHATSAPP_ACCESS_TOKEN`.
 
-### 5. Choose a webhook verify token
+### 5. Get your App Secret
 
-Pick any random string (e.g. `openssl rand -hex 32`).
+1. In the Meta Developer Dashboard, go to your app >
+   **Settings** > **Basic**.
+2. Click **Show** next to **App Secret** and copy it.
+   Set it as `WHATSAPP_APP_SECRET`.
+
+This is used to verify that incoming webhook requests
+actually came from Meta (via HMAC-SHA256 signature).
+
+### 6. Choose a webhook verify token
+
+Pick any random string (e.g. `openssl rand -hex 16`).
 Set it as `WHATSAPP_WEBHOOK_VERIFY_TOKEN`.
 Meta uses this to verify your webhook endpoint
 with a one-time GET request.
 
-### 6. Set your webhook URL
-
-Set `WHATSAPP_WEBHOOK_URL` to the public HTTPS URL
-where your asterai environment receives HTTP requests
-(e.g. `https://your-domain.com/your-username/your-env-name/asterai/whatsapp/webhook`).
-
-If running locally, use a tunnel like
-[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
-or [ngrok](https://ngrok.com).
-
 ### 7. Configure the webhook in Meta
 
-1. In the left sidebar of the developer portal (developers.facebook.com),
-   go to your app and click
-   "Customize the Connect with customers through WhatsApp use case"
-   then go to Webhooks.
+1. In the Meta Developer Dashboard, go to your app
+   and click "Customize the Connect with customers
+   through WhatsApp use case", then go to Webhooks.
 2. Under **Webhook**, click **Edit**.
-3. Enter your webhook URL as the **Callback URL**.
+3. Enter your public webhook URL as the
+   **Callback URL** (e.g.
+   `https://your-domain.com/your-username/your-env-name/asterai/whatsapp/webhook`).
+   If running locally, use a tunnel like
+   [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
+   or [ngrok](https://ngrok.com).
 4. Enter your verify token as the **Verify Token**.
 5. Click **Verify and Save**.
 6. Under **Webhook fields**, click **Manage** and
