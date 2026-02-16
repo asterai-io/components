@@ -1,0 +1,25 @@
+[package]
+name = "whatsapp"
+# Note that this version does not matter for the component,
+# only the one in component.wit is used.
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "s"
+debug = false
+strip = true
+lto = true
+
+[dependencies]
+wit-bindgen = "0.52.0"
+waki = "0.5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+hmac = "0.12"

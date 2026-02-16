@@ -1,0 +1,43 @@
+package asterai:whatsapp@0.1.0;
+
+interface types {
+  record message {
+    content: string,
+    sender: user,
+    id: string,
+  }
+
+  record user {
+    name: string,
+    phone: string,
+  }
+}
+
+interface api {
+  use types.{user};
+
+  get-self: func() -> user;
+  send-message: func(content: string, to: string) -> string;
+}
+
+/// Incoming handler for listening to WhatsApp messages.
+///
+/// Other components can implement this, and if they are included
+/// in the environment variable WHATSAPP_INCOMING_HANDLER_COMPONENTS then
+/// this component will call their `on-message` implementation
+/// whenever a WhatsApp message event is received.
+/// Example: WHATSAPP_INCOMING_HANDLER_COMPONENTS="my-username:my-component"
+interface incoming-handler {
+  use types.{message};
+
+  on-message: func(message: message);
+}
+
+world component {
+  import asterai:host/api@1.0.0;
+
+  export api;
+  export types;
+  export wasi:cli/run@0.2.0;
+  export wasi:http/incoming-handler@0.2.0;
+}
