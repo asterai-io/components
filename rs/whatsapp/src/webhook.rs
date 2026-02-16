@@ -28,13 +28,15 @@ impl HttpGuest for Component {
             Method::Post => {
                 let signature = get_signature(&request);
                 let body = read_request_body(&request);
-                if let Some(body) = body {
-                    if !verify_signature(&body, signature.as_deref()) {
-                        respond_status(response_out, 401);
-                        return;
-                    }
-                    handle_webhook(&body);
+                let Some(body) = body else {
+                    respond_status(response_out, 400);
+                    return;
+                };
+                if !verify_signature(&body, signature.as_deref()) {
+                    respond_status(response_out, 401);
+                    return;
                 }
+                handle_webhook(&body);
                 respond_ok(response_out);
             }
             _ => respond_status(response_out, 405),
