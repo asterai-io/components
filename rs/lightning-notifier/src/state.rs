@@ -5,8 +5,8 @@ const STATE_FILENAME: &str = "lightning-notifier-state.json";
 /// 4 hours in seconds.
 pub const STRIKE_COOLDOWN_SECS: u64 = 4 * 60 * 60;
 
-/// 24 hours in seconds.
-pub const FORECAST_COOLDOWN_SECS: u64 = 24 * 60 * 60;
+/// 23 hours in seconds (allows for cron timing jitter).
+pub const FORECAST_COOLDOWN_SECS: u64 = 23 * 60 * 60;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct NotifierState {
