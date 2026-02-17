@@ -1,0 +1,53 @@
+package asterai:bom@0.1.0;
+
+interface types {
+  record location {
+    geohash: string,
+    name: string,
+    state: string,
+  }
+
+  record daily-forecast {
+    date: string,
+    icon-descriptor: string,
+    short-text: string,
+    extended-text: string,
+    temp-min: option<f64>,
+    temp-max: option<f64>,
+    rain-chance: option<u32>,
+  }
+
+  record warning {
+    id: string,
+    short-title: string,
+    warning-type: string,
+    title: string,
+  }
+}
+
+/// BOM (Bureau of Meteorology) weather API wrapper.
+///
+/// Wraps the undocumented BOM JSON API at
+/// api.weather.bom.gov.au. No authentication required.
+///
+/// Locations are identified by 7-character geohashes.
+/// Use search-locations to find a geohash for a place name.
+interface api {
+  use types.{location, daily-forecast, warning};
+
+  /// Search for locations by name or coordinates.
+  search-locations: func(query: string) -> list<location>;
+
+  /// Get 7-day daily forecasts for a geohash.
+  get-daily-forecasts: func(geohash: string) -> list<daily-forecast>;
+
+  /// Get active weather warnings for a geohash.
+  get-warnings: func(geohash: string) -> list<warning>;
+}
+
+world component {
+  import asterai:host/api@1.0.0;
+
+  export api;
+  export types;
+}
