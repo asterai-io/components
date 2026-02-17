@@ -1,0 +1,37 @@
+package asterai:blitzortung@0.1.0;
+
+/// Blitzortung lightning strike types.
+interface types {
+  record strike {
+    /// Unix timestamp in seconds.
+    timestamp-secs: f64,
+    /// Latitude in degrees.
+    lat: f64,
+    /// Longitude in degrees.
+    lon: f64,
+    /// Distance from configured center in km.
+    distance-km: f64,
+  }
+}
+
+/// Incoming handler for receiving nearby lightning strikes.
+///
+/// Other components can implement this, and if they are included
+/// in the environment variable BLITZORTUNG_INCOMING_HANDLER_COMPONENTS
+/// then this component will call their on-strike implementation
+/// whenever a lightning strike is detected within range.
+/// Example: BLITZORTUNG_INCOMING_HANDLER_COMPONENTS="asterai:lightning-notifier"
+interface incoming-handler {
+  use types.{strike};
+
+  on-strike: func(strike: strike);
+}
+
+world component {
+  import asterai:host/api@1.0.0;
+  import asterai:host-ws/connection@0.1.0;
+
+  export types;
+  export wasi:cli/run@0.2.0;
+  export asterai:host-ws/incoming-handler@0.1.0;
+}
