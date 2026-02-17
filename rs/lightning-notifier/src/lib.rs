@@ -31,7 +31,6 @@ impl RunGuest for Component {
         schedule_cron("0 0 23 * * *", "jobs/check-forecast");
         println!("lightning-notifier: ready, running initial checks");
         <Component as JobsGuest>::check_warnings();
-        <Component as JobsGuest>::check_forecast();
         Ok(())
     }
 }
