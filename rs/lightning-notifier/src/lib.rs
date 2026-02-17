@@ -28,7 +28,7 @@ impl RunGuest for Component {
     fn run() -> Result<(), ()> {
         notify::validate_env().map_err(|e| eprintln!("lightning-notifier: {e}"))?;
         schedule_cron("0 */5 * * * *", "jobs/check-warnings");
-        schedule_cron("0 0 */6 * * *", "jobs/check-forecast");
+        schedule_cron("0 0 23 * * *", "jobs/check-forecast");
         println!("lightning-notifier: ready, running initial checks");
         <Component as JobsGuest>::check_warnings();
         <Component as JobsGuest>::check_forecast();
@@ -47,7 +47,7 @@ impl StrikeHandlerGuest for Component {
         let now = now_secs();
         let is_cooldown =
             now.saturating_sub(st.last_strike_notify_secs) < state::STRIKE_COOLDOWN_SECS;
-        if !is_cooldown {
+        if !is_cooldown && !is_quiet_hours() {
             let msg = format!(
                 "Lightning detected {:.0}km from Wagga Wagga! \
                  ({} strikes since last alert)",
@@ -72,7 +72,9 @@ impl JobsGuest for Component {
         let warnings = bom::get_warnings(&geohash);
         let new_warnings = find_new_thunderstorm_warnings(&warnings, &st.notified_warning_ids);
         for (id, title) in &new_warnings {
-            notify::send(&format!("BOM Warning: {title}"));
+            if !is_quiet_hours() {
+                notify::send(&format!("BOM Warning: {title}"));
+            }
             st.notified_warning_ids.push(id.clone());
         }
         if !new_warnings.is_empty() {
@@ -184,6 +186,13 @@ fn now_secs() -> u64 {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs()
+}
+
+/// Returns true if current UTC hour is between 13:00-19:59 (11 PM - 6 AM AEST).
+fn is_quiet_hours() -> bool {
+    let secs = now_secs();
+    let utc_hour = (secs % 86400) / 3600;
+    (13..20).contains(&utc_hour)
 }
 
 bindings::export!(Component with_types_in bindings);
