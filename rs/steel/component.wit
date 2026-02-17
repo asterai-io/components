@@ -1,0 +1,75 @@
+package asterai:steel@0.1.0;
+
+interface types {
+  record session-options {
+    use-proxy: option<bool>,
+    solve-captcha: option<bool>,
+    block-ads: option<bool>,
+    timeout: option<u64>,
+    user-agent: option<string>,
+    proxy-url: option<string>,
+    session-id: option<string>,
+    headless: option<bool>,
+  }
+
+  record scrape-options {
+    url: string,
+    /// Formats: "html", "markdown", "readability", "cleaned_html".
+    formats: option<list<string>>,
+    screenshot: option<bool>,
+    pdf: option<bool>,
+    use-proxy: option<bool>,
+    /// Delay in milliseconds before scraping.
+    delay: option<u64>,
+  }
+
+  record screenshot-options {
+    url: string,
+    full-page: option<bool>,
+    use-proxy: option<bool>,
+    /// Delay in milliseconds.
+    delay: option<u64>,
+  }
+
+  record pdf-options {
+    url: string,
+    use-proxy: option<bool>,
+    /// Delay in milliseconds.
+    delay: option<u64>,
+  }
+}
+
+interface steel {
+  use types.{session-options, scrape-options, screenshot-options, pdf-options};
+
+  /// Creates a new browser session. Returns session details as JSON.
+  create-session: func(options: session-options) -> string;
+
+  /// Releases (closes) a browser session by its ID.
+  release-session: func(session-id: string) -> string;
+
+  /// Releases all active browser sessions.
+  release-all-sessions: func() -> string;
+
+  /// Gets details of an existing session by ID.
+  get-session: func(session-id: string) -> string;
+
+  /// Lists all active sessions as JSON.
+  list-sessions: func() -> string;
+
+  /// Scrapes a webpage and returns content as JSON.
+  scrape: func(options: scrape-options) -> string;
+
+  /// Takes a screenshot of a webpage and returns the result as JSON.
+  screenshot: func(options: screenshot-options) -> string;
+
+  /// Generates a PDF of a webpage and returns the result as JSON.
+  pdf: func(options: pdf-options) -> string;
+}
+
+world component {
+  import asterai:host/api@1.0.0;
+
+  export steel;
+  export types;
+}
