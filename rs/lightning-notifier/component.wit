@@ -1,0 +1,34 @@
+package asterai:lightning-notifier@0.1.0;
+
+/// Lightning notification orchestrator.
+///
+/// Receives lightning strikes from blitzortung,
+/// polls BOM for storm forecasts and warnings,
+/// and sends notifications with rate limiting.
+///
+/// Environment variables:
+/// - NOTIFY_COMPONENT: messaging component name
+///   (e.g. "asterai:twilio").
+/// - NOTIFY_RECIPIENT: recipient identifier
+///   (e.g. phone number or chat ID).
+/// - NOTIFY_FUNCTION (optional): send function path
+///   (default "api/send-message").
+
+interface jobs {
+  /// Called by cron every 5 minutes.
+  check-warnings: func();
+
+  /// Called by cron every 6 hours.
+  check-forecast: func();
+}
+
+world component {
+  import asterai:host-cron/scheduler@0.1.0;
+  import asterai:host/api@1.0.0;
+  import asterai:bom/api@0.1.0;
+  import asterai:llm/llm@1.0.0;
+
+  export jobs;
+  export asterai:blitzortung/incoming-handler@0.1.0;
+  export wasi:cli/run@0.2.0;
+}
