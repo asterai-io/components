@@ -15,7 +15,8 @@ static AUTH_TOKEN: LazyLock<String> = LazyLock::new(|| {
     std::env::var("TWILIO_AUTH_TOKEN").expect("TWILIO_AUTH_TOKEN env var is required")
 });
 static PHONE_NUMBER: LazyLock<String> = LazyLock::new(|| {
-    let num = std::env::var("TWILIO_PHONE_NUMBER").expect("TWILIO_PHONE_NUMBER env var is required");
+    let num =
+        std::env::var("TWILIO_PHONE_NUMBER").expect("TWILIO_PHONE_NUMBER env var is required");
     match num.starts_with('+') {
         true => num,
         false => format!("+{num}"),
@@ -38,7 +39,17 @@ impl Guest for Component {
     }
 
     fn send_message(content: String, to: String) -> String {
-        send_sms(&content, &to).unwrap_or_else(|e| format!("error: {e}"))
+        println!("twilio: sending SMS to {to}");
+        match send_sms(&content, &to) {
+            Ok(sid) => {
+                println!("twilio: sent (SID {sid})");
+                sid
+            }
+            Err(e) => {
+                eprintln!("twilio: send failed: {e}");
+                format!("error: {e}")
+            }
+        }
     }
 }
 
