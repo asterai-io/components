@@ -1,0 +1,94 @@
+package asterai:fs@1.0.0;
+
+interface types {
+  /// The kind of a filesystem entry.
+  enum entry-kind {
+    file,
+    directory,
+  }
+
+  /// A single entry returned by list.
+  record entry {
+    /// Entry name (not the full path).
+    name: string,
+    /// Whether this entry is a file or directory.
+    kind: entry-kind,
+    /// Size in bytes (0 for directories on backends that don't track this).
+    size: u64,
+  }
+
+  /// Metadata about a file or directory.
+  record metadata {
+    /// Size in bytes.
+    size: u64,
+    /// Entry kind.
+    kind: entry-kind,
+    /// Last modified time as seconds since Unix epoch.
+    /// None if the backend doesn't support timestamps.
+    last-modified: option<u64>,
+  }
+}
+
+/// Portable filesystem interface for AI agent tooling.
+///
+/// Designed to map cleanly to both local filesystems and
+/// object-storage backends (S3, GCS, etc.).
+/// Paths use forward slashes and are relative to the
+/// backend's configured root.
+///
+/// Backend notes:
+/// - On object stores (S3, GCS), mkdir is a no-op since
+///   directories are implicit in key prefixes.
+/// - cp on S3 uses server-side copy, which has a ~5 GB limit
+///   per object without multipart. Backends should handle
+///   this transparently where possible.
+/// - Symlinks are not part of this interface. Local FS
+///   backends should follow symlinks transparently.
+interface fs {
+  use types.{entry, metadata};
+
+  /// Read a file's entire contents.
+  read: func(path: string) -> result<list<u8>, string>;
+
+  /// Read a byte range from a file.
+  /// Reads up to `length` bytes starting at `offset`.
+  /// Maps to seek+read on local FS, Range headers on S3.
+  read-range: func(path: string, offset: u64, length: u64) -> result<list<u8>, string>;
+
+  /// Write data to a file, creating or overwriting it.
+  write: func(path: string, data: list<u8>) -> result<_, string>;
+
+  /// Append data to a file, creating it if it doesn't exist.
+  append: func(path: string, data: list<u8>) -> result<_, string>;
+
+  /// Create a file if it doesn't exist, or update its
+  /// last-modified timestamp if it does.
+  /// Does not modify existing file contents.
+  touch: func(path: string) -> result<_, string>;
+
+  /// List entries in a directory.
+  /// If recursive is true, walks the entire subtree.
+  /// Entry names are relative to the listed path.
+  ls: func(path: string, recursive: bool) -> result<list<entry>, string>;
+
+  /// Create a directory (and parents if needed).
+  /// No-op on object-storage backends where directories
+  /// are implicit in key prefixes.
+  mkdir: func(path: string) -> result<_, string>;
+
+  /// Remove a file or directory.
+  /// If recursive is true, removes a directory and all its contents.
+  rm: func(path: string, recursive: bool) -> result<_, string>;
+
+  /// Copy a file or directory from src to dst.
+  cp: func(src: string, dst: string, recursive: bool) -> result<_, string>;
+
+  /// Move/rename a file or directory from src to dst.
+  mv: func(src: string, dst: string) -> result<_, string>;
+
+  /// Get metadata for a path.
+  stat: func(path: string) -> result<metadata, string>;
+
+  /// Check whether a path exists.
+  exists: func(path: string) -> result<bool, string>;
+}
