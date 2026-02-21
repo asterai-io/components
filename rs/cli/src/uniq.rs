@@ -74,3 +74,79 @@ fn flush(opts: &Opts, prev: &Option<String>, count: usize, output: &mut String) 
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str, stdin: Option<&str>) -> Result<String, String> {
+        run(args, stdin.map(String::from))
+    }
+
+    #[test]
+    fn basic_dedup() {
+        let out = cmd("", Some("a\na\nb\nb\nb\nc")).unwrap();
+        assert_eq!(out, "a\nb\nc\n");
+    }
+
+    #[test]
+    fn non_adjacent_not_deduped() {
+        let out = cmd("", Some("a\nb\na")).unwrap();
+        assert_eq!(out, "a\nb\na\n");
+    }
+
+    #[test]
+    fn count_flag() {
+        let out = cmd("-c", Some("a\na\nb\nc\nc\nc")).unwrap();
+        assert!(out.contains("2 a"));
+        assert!(out.contains("1 b"));
+        assert!(out.contains("3 c"));
+    }
+
+    #[test]
+    fn duplicates_only() {
+        let out = cmd("-d", Some("a\na\nb\nc\nc")).unwrap();
+        assert_eq!(out, "a\nc\n");
+    }
+
+    #[test]
+    fn case_insensitive() {
+        let out = cmd("-i", Some("Hello\nhello\nHELLO\nworld")).unwrap();
+        assert_eq!(out, "hello\nworld\n");
+    }
+
+    #[test]
+    fn empty_input() {
+        let out = cmd("", Some("")).unwrap();
+        assert_eq!(out, "");
+    }
+
+    #[test]
+    fn no_duplicates() {
+        let out = cmd("", Some("a\nb\nc")).unwrap();
+        assert_eq!(out, "a\nb\nc\n");
+    }
+
+    #[test]
+    fn count_with_duplicates_only() {
+        let out = cmd("-cd", Some("a\na\nb\nc\nc")).unwrap();
+        assert!(out.contains("2 a"));
+        assert!(out.contains("2 c"));
+        assert!(!out.contains("b"));
+    }
+
+    #[test]
+    fn single_line() {
+        let out = cmd("", Some("only")).unwrap();
+        assert_eq!(out, "only\n");
+    }
+
+    #[test]
+    fn file_mode() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("f.txt");
+        std::fs::write(&p, "x\nx\ny\n").unwrap();
+        let out = cmd(&p.to_str().unwrap().to_string(), None).unwrap();
+        assert_eq!(out, "x\ny\n");
+    }
+}
