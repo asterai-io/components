@@ -80,3 +80,75 @@ fn parse_num(s: &str) -> f64 {
         .parse()
         .unwrap_or(0.0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str, stdin: Option<&str>) -> Result<String, String> {
+        run(args, stdin.map(String::from))
+    }
+
+    #[test]
+    fn alphabetical() {
+        let out = cmd("", Some("banana\napple\ncherry")).unwrap();
+        assert_eq!(out, "apple\nbanana\ncherry\n");
+    }
+
+    #[test]
+    fn reverse() {
+        let out = cmd("-r", Some("a\nb\nc")).unwrap();
+        assert_eq!(out, "c\nb\na\n");
+    }
+
+    #[test]
+    fn numeric() {
+        let out = cmd("-n", Some("10\n2\n1\n20")).unwrap();
+        assert_eq!(out, "1\n2\n10\n20\n");
+    }
+
+    #[test]
+    fn numeric_reverse() {
+        let out = cmd("-nr", Some("1\n3\n2")).unwrap();
+        assert_eq!(out, "3\n2\n1\n");
+    }
+
+    #[test]
+    fn unique() {
+        let out = cmd("-u", Some("a\na\nb\nb\nc")).unwrap();
+        assert_eq!(out, "a\nb\nc\n");
+    }
+
+    #[test]
+    fn numeric_with_text() {
+        let out = cmd("-n", Some("10apples\n2bananas\n1cherry")).unwrap();
+        assert_eq!(out, "1cherry\n2bananas\n10apples\n");
+    }
+
+    #[test]
+    fn empty_input() {
+        let out = cmd("", Some("")).unwrap();
+        assert_eq!(out, "");
+    }
+
+    #[test]
+    fn single_line() {
+        let out = cmd("", Some("only")).unwrap();
+        assert_eq!(out, "only\n");
+    }
+
+    #[test]
+    fn already_sorted() {
+        let out = cmd("", Some("a\nb\nc")).unwrap();
+        assert_eq!(out, "a\nb\nc\n");
+    }
+
+    #[test]
+    fn file_mode() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("f.txt");
+        std::fs::write(&p, "c\na\nb\n").unwrap();
+        let out = cmd(&p.to_str().unwrap().to_string(), None).unwrap();
+        assert_eq!(out, "a\nb\nc\n");
+    }
+}
