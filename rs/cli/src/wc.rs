@@ -88,3 +88,85 @@ fn format_line(opts: &Opts, lines: usize, words: usize, chars: usize, name: Opti
     }
     output.push('\n');
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str, stdin: Option<&str>) -> Result<String, String> {
+        run(args, stdin.map(String::from))
+    }
+
+    #[test]
+    fn default_all_counts() {
+        let out = cmd("", Some("hello world\nfoo\n")).unwrap();
+        assert!(out.contains("2")); // 2 lines
+        assert!(out.contains("3")); // 3 words
+    }
+
+    #[test]
+    fn lines_only() {
+        let out = cmd("-l", Some("a\nb\nc\n")).unwrap();
+        assert!(out.trim().starts_with("3"));
+    }
+
+    #[test]
+    fn words_only() {
+        let out = cmd("-w", Some("one two three")).unwrap();
+        assert!(out.trim().starts_with("3"));
+    }
+
+    #[test]
+    fn chars_only() {
+        let out = cmd("-c", Some("hello")).unwrap();
+        assert!(out.trim().starts_with("5"));
+    }
+
+    #[test]
+    fn combined_flags() {
+        let out = cmd("-lw", Some("a b\nc d\n")).unwrap();
+        assert!(out.contains("2")); // 2 lines
+        assert!(out.contains("4")); // 4 words
+    }
+
+    #[test]
+    fn empty_stdin() {
+        let out = cmd("", Some("")).unwrap();
+        assert!(out.contains("0"));
+    }
+
+    #[test]
+    fn file_mode() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("f.txt");
+        std::fs::write(&p, "one two\nthree\n").unwrap();
+        let out = cmd(&p.to_str().unwrap().to_string(), None).unwrap();
+        assert!(out.contains("2")); // lines
+        assert!(out.contains("3")); // words
+        assert!(out.contains(&p.to_str().unwrap().to_string()));
+    }
+
+    #[test]
+    fn multiple_files_total() {
+        let dir = tempfile::tempdir().unwrap();
+        let p1 = dir.path().join("a.txt");
+        let p2 = dir.path().join("b.txt");
+        std::fs::write(&p1, "one\n").unwrap();
+        std::fs::write(&p2, "two\n").unwrap();
+        let args = format!("{} {}", p1.display(), p2.display());
+        let out = cmd(&args, None).unwrap();
+        assert!(out.contains("total"));
+    }
+
+    #[test]
+    fn missing_file() {
+        let err = cmd("/no/file.txt", None).unwrap_err();
+        assert!(err.contains("wc:"));
+    }
+
+    #[test]
+    fn m_flag_same_as_c() {
+        let out = cmd("-m", Some("hello")).unwrap();
+        assert!(out.trim().starts_with("5"));
+    }
+}
