@@ -3,6 +3,7 @@ use crate::bindings::exports::asterai::cli::command::Guest;
 mod cat;
 mod cp;
 mod ls;
+mod mv;
 
 #[allow(warnings)]
 mod bindings {
@@ -25,6 +26,7 @@ impl Guest for Component {
             "cat" => cat::run(cmd_args, stdin),
             "cp" => cp::run(cmd_args, stdin),
             "ls" => ls::run(cmd_args, stdin),
+            "mv" => mv::run(cmd_args, stdin),
             _ => Err(format!("unknown command: {cmd}")),
         }
     }
