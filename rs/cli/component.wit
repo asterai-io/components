@@ -1,0 +1,11 @@
+package asterai:cli@0.1.0;
+
+interface command {
+  run: func(args: string, stdin: option<string>) -> result<string, string>;
+}
+
+world component {
+  import asterai:host/api@1.0.0;
+
+  export command;
+}

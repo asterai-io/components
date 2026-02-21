@@ -5,6 +5,8 @@ Shared interface: `asterai:cli/command`
 run: func(args: string, stdin: option<string>) -> result<string, string>;
 ```
 
+File operations use the `asterai:fs` interface as the storage backend.
+
 ## Tools
 
 | Component                | Description                                    | Priority | CRUD role     |
