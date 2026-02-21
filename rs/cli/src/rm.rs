@@ -1,5 +1,4 @@
-use std::fs;
-use std::path::Path;
+use crate::fs_ops;
 
 pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     let mut recursive = false;
@@ -20,16 +19,11 @@ pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
         return Err("rm: missing operand".into());
     }
     for path in &paths {
-        let p = Path::new(path);
-        let meta = fs::metadata(p).map_err(|e| format!("rm: {path}: {e}"))?;
-        if meta.is_dir() {
-            if !recursive {
-                return Err(format!("rm: {path}: is a directory"));
-            }
-            fs::remove_dir_all(p).map_err(|e| format!("rm: {path}: {e}"))?;
-        } else {
-            fs::remove_file(p).map_err(|e| format!("rm: {path}: {e}"))?;
+        let meta = fs_ops::stat(path).map_err(|e| format!("rm: {path}: {e}"))?;
+        if meta.is_dir() && !recursive {
+            return Err(format!("rm: {path}: is a directory"));
         }
+        fs_ops::rm(path, recursive).map_err(|e| format!("rm: {path}: {e}"))?;
     }
     Ok(String::new())
 }
@@ -46,7 +40,7 @@ mod tests {
     fn remove_file() {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("f.txt");
-        fs::write(&p, "x").unwrap();
+        std::fs::write(&p, "x").unwrap();
         cmd(p.to_str().unwrap()).unwrap();
         assert!(!p.exists());
     }
@@ -56,8 +50,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let a = dir.path().join("a.txt");
         let b = dir.path().join("b.txt");
-        fs::write(&a, "").unwrap();
-        fs::write(&b, "").unwrap();
+        std::fs::write(&a, "").unwrap();
+        std::fs::write(&b, "").unwrap();
         cmd(&format!("{} {}", a.display(), b.display())).unwrap();
         assert!(!a.exists());
         assert!(!b.exists());
@@ -67,7 +61,7 @@ mod tests {
     fn dir_without_recursive_fails() {
         let dir = tempfile::tempdir().unwrap();
         let sub = dir.path().join("sub");
-        fs::create_dir(&sub).unwrap();
+        std::fs::create_dir(&sub).unwrap();
         let err = cmd(sub.to_str().unwrap()).unwrap_err();
         assert!(err.contains("is a directory"));
     }
@@ -76,8 +70,8 @@ mod tests {
     fn recursive_dir() {
         let dir = tempfile::tempdir().unwrap();
         let sub = dir.path().join("sub");
-        fs::create_dir(&sub).unwrap();
-        fs::write(sub.join("f.txt"), "").unwrap();
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(sub.join("f.txt"), "").unwrap();
         cmd(&format!("-r {}", sub.display())).unwrap();
         assert!(!sub.exists());
     }

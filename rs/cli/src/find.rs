@@ -1,5 +1,4 @@
-use std::fs;
-use std::path::Path;
+use crate::fs_ops;
 
 struct Opts {
     root: String,
@@ -60,8 +59,82 @@ fn parse_opts(args: &str) -> Result<Opts, String> {
 pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     let opts = parse_opts(args)?;
     let mut output = Vec::new();
-    walk(Path::new(&opts.root), &opts, 0, &mut output)?;
+    // Check the root itself
+    let root_meta = fs_ops::stat(&opts.root)
+        .map_err(|e| format!("find: {}: {e}", opts.root))?;
+    if matches_opts(&opts.root, root_meta.is_dir(), &opts) {
+        output.push(opts.root.clone());
+    }
+    walk(&opts.root, &opts, 0, &mut output)?;
     Ok(output.join("\n") + if output.is_empty() { "" } else { "\n" })
+}
+
+fn walk(
+    dir: &str,
+    opts: &Opts,
+    depth: usize,
+    output: &mut Vec<String>,
+) -> Result<(), String> {
+    if let Some(max) = opts.maxdepth {
+        if depth >= max {
+            return Ok(());
+        }
+    }
+
+    let entries = match fs_ops::ls(dir, false) {
+        Ok(e) => e,
+        Err(_) => return Ok(()), // skip unreadable dirs
+    };
+
+    for entry in entries {
+        let path = format!("{dir}/{}", entry.name);
+        let is_dir = entry.is_dir();
+
+        if matches_opts_by_name(&entry.name, is_dir, opts) {
+            output.push(path.clone());
+        }
+
+        if is_dir {
+            walk(&path, opts, depth + 1, output)?;
+        }
+    }
+    Ok(())
+}
+
+fn matches_opts(path: &str, is_dir: bool, opts: &Opts) -> bool {
+    if let Some(t) = opts.file_type {
+        match t {
+            'f' if is_dir => return false,
+            'd' if !is_dir => return false,
+            _ => {}
+        }
+    }
+    if let Some(ref pattern) = opts.name {
+        let name = std::path::Path::new(path)
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        if !glob_match(pattern, &name) {
+            return false;
+        }
+    }
+    true
+}
+
+fn matches_opts_by_name(name: &str, is_dir: bool, opts: &Opts) -> bool {
+    if let Some(t) = opts.file_type {
+        match t {
+            'f' if is_dir => return false,
+            'd' if !is_dir => return false,
+            _ => {}
+        }
+    }
+    if let Some(ref pattern) = opts.name {
+        if !glob_match(pattern, name) {
+            return false;
+        }
+    }
+    true
 }
 
 fn glob_match(pattern: &str, name: &str) -> bool {
@@ -96,90 +169,18 @@ fn glob_match_inner(pat: &[u8], name: &[u8]) -> bool {
     pi == pat.len()
 }
 
-fn walk(
-    dir: &Path,
-    opts: &Opts,
-    depth: usize,
-    output: &mut Vec<String>,
-) -> Result<(), String> {
-    // check the root itself at depth 0
-    if depth == 0 {
-        if matches_entry(dir, opts)? {
-            output.push(dir.display().to_string());
-        }
-    }
-
-    if let Some(max) = opts.maxdepth {
-        if depth >= max {
-            return Ok(());
-        }
-    }
-
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return Ok(()), // skip unreadable dirs
-    };
-
-    let mut children: Vec<_> = entries
-        .filter_map(|e| e.ok())
-        .collect();
-    children.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
-
-    for entry in children {
-        let path = entry.path();
-        let meta = match entry.metadata() {
-            Ok(m) => m,
-            Err(_) => continue,
-        };
-
-        if matches_entry_with_meta(&path, &meta, opts) {
-            output.push(path.display().to_string());
-        }
-
-        if meta.is_dir() {
-            walk(&path, opts, depth + 1, output)?;
-        }
-    }
-    Ok(())
-}
-
-fn matches_entry(path: &Path, opts: &Opts) -> Result<bool, String> {
-    let meta = fs::metadata(path).map_err(|e| format!("find: {}: {e}", path.display()))?;
-    Ok(matches_entry_with_meta(path, &meta, opts))
-}
-
-fn matches_entry_with_meta(path: &Path, meta: &fs::Metadata, opts: &Opts) -> bool {
-    if let Some(t) = opts.file_type {
-        match t {
-            'f' if !meta.is_file() => return false,
-            'd' if !meta.is_dir() => return false,
-            _ => {}
-        }
-    }
-    if let Some(ref pattern) = opts.name {
-        let name = path
-            .file_name()
-            .map(|n| n.to_string_lossy())
-            .unwrap_or_default();
-        if !glob_match(pattern, &name) {
-            return false;
-        }
-    }
-    true
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     fn setup() -> tempfile::TempDir {
         let dir = tempfile::tempdir().unwrap();
-        fs::write(dir.path().join("a.txt"), "").unwrap();
-        fs::write(dir.path().join("b.rs"), "").unwrap();
-        fs::create_dir(dir.path().join("sub")).unwrap();
-        fs::write(dir.path().join("sub/c.txt"), "").unwrap();
-        fs::create_dir(dir.path().join("sub/deep")).unwrap();
-        fs::write(dir.path().join("sub/deep/d.txt"), "").unwrap();
+        std::fs::write(dir.path().join("a.txt"), "").unwrap();
+        std::fs::write(dir.path().join("b.rs"), "").unwrap();
+        std::fs::create_dir(dir.path().join("sub")).unwrap();
+        std::fs::write(dir.path().join("sub/c.txt"), "").unwrap();
+        std::fs::create_dir(dir.path().join("sub/deep")).unwrap();
+        std::fs::write(dir.path().join("sub/deep/d.txt"), "").unwrap();
         dir
     }
 
@@ -196,7 +197,7 @@ mod tests {
         let dir = setup();
         let out = cmd(&dir.path().display().to_string()).unwrap();
         let l = lines(&out);
-        assert!(l.len() >= 6); // root + a.txt + b.rs + sub/ + sub/c.txt + sub/deep/ + sub/deep/d.txt
+        assert!(l.len() >= 6);
     }
 
     #[test]
@@ -205,7 +206,7 @@ mod tests {
         let out = cmd(&format!("{} -name *.txt", dir.path().display())).unwrap();
         let l = lines(&out);
         assert!(l.iter().all(|p| p.ends_with(".txt")));
-        assert_eq!(l.len(), 3); // a.txt, sub/c.txt, sub/deep/d.txt
+        assert_eq!(l.len(), 3);
     }
 
     #[test]
@@ -214,7 +215,7 @@ mod tests {
         let out = cmd(&format!("{} -type f", dir.path().display())).unwrap();
         let l = lines(&out);
         for p in &l {
-            assert!(Path::new(p).is_file());
+            assert!(std::path::Path::new(p).is_file());
         }
     }
 
@@ -224,9 +225,9 @@ mod tests {
         let out = cmd(&format!("{} -type d", dir.path().display())).unwrap();
         let l = lines(&out);
         for p in &l {
-            assert!(Path::new(p).is_dir());
+            assert!(std::path::Path::new(p).is_dir());
         }
-        assert!(l.len() >= 3); // root, sub, sub/deep
+        assert!(l.len() >= 3);
     }
 
     #[test]
@@ -234,7 +235,7 @@ mod tests {
         let dir = setup();
         let out = cmd(&format!("{} -maxdepth 0", dir.path().display())).unwrap();
         let l = lines(&out);
-        assert_eq!(l.len(), 1); // root only
+        assert_eq!(l.len(), 1);
     }
 
     #[test]
@@ -242,7 +243,6 @@ mod tests {
         let dir = setup();
         let out = cmd(&format!("{} -maxdepth 1", dir.path().display())).unwrap();
         let l = lines(&out);
-        // root + a.txt + b.rs + sub (no sub/c.txt, no sub/deep)
         assert!(!l.iter().any(|p| p.contains("deep")));
         assert!(!l.iter().any(|p| p.ends_with("c.txt")));
     }
@@ -253,7 +253,7 @@ mod tests {
         let out = cmd(&format!("{} -name ?.txt", dir.path().display())).unwrap();
         let l = lines(&out);
         assert!(l.iter().all(|p| {
-            let name = Path::new(p).file_name().unwrap().to_str().unwrap();
+            let name = std::path::Path::new(p).file_name().unwrap().to_str().unwrap();
             name.len() == 5 && name.ends_with(".txt")
         }));
     }

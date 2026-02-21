@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 use std::path::Path;
 
 struct Opts {
@@ -35,53 +35,38 @@ fn parse_opts(args: &str) -> Result<Opts, String> {
 
 pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     let opts = parse_opts(args)?;
-    let dst = Path::new(&opts.dst);
+    let dst_is_dir = fs_ops::exists(&opts.dst)
+        .unwrap_or(false)
+        && fs_ops::stat(&opts.dst)
+            .map(|m| m.is_dir())
+            .unwrap_or(false);
     let multi = opts.src.len() > 1;
 
-    if multi && !dst.is_dir() {
+    if multi && !dst_is_dir {
         return Err("cp: target is not a directory".into());
     }
 
     for src in &opts.src {
-        let s = Path::new(src);
-        let target = if dst.is_dir() {
-            dst.join(s.file_name().ok_or_else(|| format!("cp: invalid source: {src}"))?)
+        let src_meta = fs_ops::stat(src).map_err(|e| format!("cp: {src}: {e}"))?;
+
+        if src_meta.is_dir() && !opts.recursive {
+            return Err(format!("cp: -r not specified; omitting directory '{src}'"));
+        }
+
+        let target = if dst_is_dir {
+            let name = Path::new(src)
+                .file_name()
+                .ok_or_else(|| format!("cp: invalid source: {src}"))?
+                .to_string_lossy();
+            format!("{}/{name}", opts.dst)
         } else {
-            dst.to_path_buf()
+            opts.dst.clone()
         };
 
-        let meta = fs::metadata(s).map_err(|e| format!("cp: {src}: {e}"))?;
-        if meta.is_dir() {
-            if !opts.recursive {
-                return Err(format!("cp: -r not specified; omitting directory '{src}'"));
-            }
-            cp_recursive(s, &target)?;
-        } else {
-            if let Some(parent) = target.parent() {
-                if !parent.exists() {
-                    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-                }
-            }
-            fs::copy(s, &target).map_err(|e| format!("cp: {src}: {e}"))?;
-        }
+        fs_ops::cp(src, &target, opts.recursive)
+            .map_err(|e| format!("cp: {src}: {e}"))?;
     }
     Ok(String::new())
-}
-
-fn cp_recursive(src: &Path, dst: &Path) -> Result<(), String> {
-    fs::create_dir_all(dst).map_err(|e| format!("cp: {}: {e}", dst.display()))?;
-    for entry in fs::read_dir(src).map_err(|e| format!("cp: {}: {e}", src.display()))? {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let target = dst.join(entry.file_name());
-        let meta = entry.metadata().map_err(|e| e.to_string())?;
-        if meta.is_dir() {
-            cp_recursive(&entry.path(), &target)?;
-        } else {
-            fs::copy(&entry.path(), &target)
-                .map_err(|e| format!("cp: {}: {e}", entry.path().display()))?;
-        }
-    }
-    Ok(())
 }
 
 #[cfg(test)]
@@ -97,10 +82,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let src = dir.path().join("a.txt");
         let dst = dir.path().join("b.txt");
-        fs::write(&src, "hello").unwrap();
+        std::fs::write(&src, "hello").unwrap();
         cmd(&format!("{} {}", src.display(), dst.display())).unwrap();
-        assert_eq!(fs::read_to_string(&dst).unwrap(), "hello");
-        assert!(src.exists()); // original still exists
+        assert_eq!(std::fs::read_to_string(&dst).unwrap(), "hello");
+        assert!(src.exists());
     }
 
     #[test]
@@ -108,10 +93,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let src = dir.path().join("a.txt");
         let sub = dir.path().join("sub");
-        fs::write(&src, "data").unwrap();
-        fs::create_dir(&sub).unwrap();
+        std::fs::write(&src, "data").unwrap();
+        std::fs::create_dir(&sub).unwrap();
         cmd(&format!("{} {}", src.display(), sub.display())).unwrap();
-        assert_eq!(fs::read_to_string(sub.join("a.txt")).unwrap(), "data");
+        assert_eq!(std::fs::read_to_string(sub.join("a.txt")).unwrap(), "data");
     }
 
     #[test]
@@ -120,9 +105,9 @@ mod tests {
         let a = dir.path().join("a.txt");
         let b = dir.path().join("b.txt");
         let sub = dir.path().join("out");
-        fs::write(&a, "aa").unwrap();
-        fs::write(&b, "bb").unwrap();
-        fs::create_dir(&sub).unwrap();
+        std::fs::write(&a, "aa").unwrap();
+        std::fs::write(&b, "bb").unwrap();
+        std::fs::create_dir(&sub).unwrap();
         cmd(&format!("{} {} {}", a.display(), b.display(), sub.display())).unwrap();
         assert!(sub.join("a.txt").exists());
         assert!(sub.join("b.txt").exists());
@@ -133,10 +118,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let src = dir.path().join("src_dir");
         let dst = dir.path().join("dst_dir");
-        fs::create_dir(&src).unwrap();
-        fs::write(src.join("f.txt"), "content").unwrap();
+        std::fs::create_dir(&src).unwrap();
+        std::fs::write(src.join("f.txt"), "content").unwrap();
         cmd(&format!("-r {} {}", src.display(), dst.display())).unwrap();
-        assert_eq!(fs::read_to_string(dst.join("f.txt")).unwrap(), "content");
+        assert_eq!(std::fs::read_to_string(dst.join("f.txt")).unwrap(), "content");
     }
 
     #[test]
@@ -144,7 +129,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let src = dir.path().join("src_dir");
         let dst = dir.path().join("dst_dir");
-        fs::create_dir(&src).unwrap();
+        std::fs::create_dir(&src).unwrap();
         let err = cmd(&format!("{} {}", src.display(), dst.display())).unwrap_err();
         assert!(err.contains("-r not specified"));
     }
@@ -153,7 +138,7 @@ mod tests {
     fn missing_operand() {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("a.txt");
-        fs::write(&p, "x").unwrap();
+        std::fs::write(&p, "x").unwrap();
         let err = cmd(&format!("{}", p.display())).unwrap_err();
         assert!(err.contains("missing operand"));
     }

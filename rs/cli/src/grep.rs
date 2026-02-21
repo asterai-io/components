@@ -1,5 +1,5 @@
+use crate::fs_ops;
 use regex::RegexBuilder;
-use std::fs;
 
 struct Opts {
     ignore_case: bool,
@@ -71,7 +71,7 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
         }
         let show_filename = files.len() > 1;
         for file in &files {
-            let content = fs::read_to_string(file)
+            let content = fs_ops::read_to_string(file)
                 .map_err(|e| format!("grep: {file}: {e}"))?;
             let label = if show_filename { Some(file.as_str()) } else { None };
             grep_lines(&content, label, &re, &opts, &mut output);
@@ -127,20 +127,16 @@ fn grep_lines(
 }
 
 fn collect_files(path: &str, files: &mut Vec<String>) -> Result<(), String> {
-    let meta = fs::metadata(path).map_err(|e| format!("grep: {path}: {e}"))?;
-    if meta.is_file() {
-        files.push(path.to_string());
-    } else if meta.is_dir() {
-        for entry in fs::read_dir(path).map_err(|e| format!("grep: {path}: {e}"))? {
-            let entry = entry.map_err(|e| e.to_string())?;
-            let p = entry.path().to_string_lossy().into_owned();
-            let meta = entry.metadata().map_err(|e| e.to_string())?;
-            if meta.is_file() {
-                files.push(p);
-            } else if meta.is_dir() {
-                collect_files(&p, files)?;
+    let meta = fs_ops::stat(path).map_err(|e| format!("grep: {path}: {e}"))?;
+    if meta.is_dir() {
+        let entries = fs_ops::ls(path, true).map_err(|e| format!("grep: {path}: {e}"))?;
+        for entry in entries {
+            if !entry.is_dir() {
+                files.push(format!("{path}/{}", entry.name));
             }
         }
+    } else {
+        files.push(path.to_string());
     }
     Ok(())
 }

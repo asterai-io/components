@@ -1,5 +1,5 @@
+use crate::fs_ops;
 use regex::Regex;
-use std::fs;
 
 struct Opts {
     in_place: bool,
@@ -103,11 +103,11 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
 
     let mut output = String::new();
     for path in &opts.paths {
-        let content = fs::read_to_string(path)
+        let content = fs_ops::read_to_string(path)
             .map_err(|e| format!("sed: {path}: {e}"))?;
         let result = apply(&content, &sub);
         if opts.in_place {
-            fs::write(path, &result)
+            fs_ops::write(path, result.as_bytes())
                 .map_err(|e| format!("sed: {path}: {e}"))?;
         } else {
             output.push_str(&result);

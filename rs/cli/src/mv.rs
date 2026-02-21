@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 use std::path::Path;
 
 pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
@@ -7,20 +7,27 @@ pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
         return Err("mv: missing operand".into());
     }
     let dst = paths.pop().unwrap();
-    let dst = Path::new(dst);
+    let dst_is_dir = fs_ops::exists(dst)
+        .unwrap_or(false)
+        && fs_ops::stat(dst)
+            .map(|m| m.is_dir())
+            .unwrap_or(false);
 
-    if paths.len() > 1 && !dst.is_dir() {
+    if paths.len() > 1 && !dst_is_dir {
         return Err("mv: target is not a directory".into());
     }
 
     for src in &paths {
-        let s = Path::new(src);
-        let target = if dst.is_dir() {
-            dst.join(s.file_name().ok_or_else(|| format!("mv: invalid source: {src}"))?)
+        let target = if dst_is_dir {
+            let name = Path::new(src)
+                .file_name()
+                .ok_or_else(|| format!("mv: invalid source: {src}"))?
+                .to_string_lossy();
+            format!("{dst}/{name}")
         } else {
-            dst.to_path_buf()
+            dst.to_string()
         };
-        fs::rename(s, &target).map_err(|e| format!("mv: {src}: {e}"))?;
+        fs_ops::mv(src, &target).map_err(|e| format!("mv: {src}: {e}"))?;
     }
     Ok(String::new())
 }
@@ -38,10 +45,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let src = dir.path().join("a.txt");
         let dst = dir.path().join("b.txt");
-        fs::write(&src, "hello").unwrap();
+        std::fs::write(&src, "hello").unwrap();
         cmd(&format!("{} {}", src.display(), dst.display())).unwrap();
         assert!(!src.exists());
-        assert_eq!(fs::read_to_string(&dst).unwrap(), "hello");
+        assert_eq!(std::fs::read_to_string(&dst).unwrap(), "hello");
     }
 
     #[test]
@@ -49,8 +56,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let src = dir.path().join("a.txt");
         let sub = dir.path().join("sub");
-        fs::write(&src, "data").unwrap();
-        fs::create_dir(&sub).unwrap();
+        std::fs::write(&src, "data").unwrap();
+        std::fs::create_dir(&sub).unwrap();
         cmd(&format!("{} {}", src.display(), sub.display())).unwrap();
         assert!(!src.exists());
         assert!(sub.join("a.txt").exists());
@@ -62,9 +69,9 @@ mod tests {
         let a = dir.path().join("a.txt");
         let b = dir.path().join("b.txt");
         let sub = dir.path().join("out");
-        fs::write(&a, "aa").unwrap();
-        fs::write(&b, "bb").unwrap();
-        fs::create_dir(&sub).unwrap();
+        std::fs::write(&a, "aa").unwrap();
+        std::fs::write(&b, "bb").unwrap();
+        std::fs::create_dir(&sub).unwrap();
         cmd(&format!("{} {} {}", a.display(), b.display(), sub.display())).unwrap();
         assert!(!a.exists());
         assert!(!b.exists());

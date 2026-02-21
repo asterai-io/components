@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     lines: bool,
@@ -48,7 +48,7 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
         format_line(&opts, l, w, c, None, &mut output);
     } else {
         for path in &opts.paths {
-            let content = fs::read_to_string(path)
+            let content = fs_ops::read_to_string(path)
                 .map_err(|e| format!("wc: {path}: {e}"))?;
             let (l, w, c) = count(&content);
             total.0 += l;

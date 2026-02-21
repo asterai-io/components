@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     lines: usize,
@@ -47,7 +47,7 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
                 }
                 output.push_str(&format!("==> {path} <==\n"));
             }
-            let content = fs::read_to_string(path)
+            let content = fs_ops::read_to_string(path)
                 .map_err(|e| format!("head: {path}: {e}"))?;
             let taken: Vec<&str> = content.lines().take(opts.lines).collect();
             output.push_str(&taken.join("\n"));

@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     root: String,
@@ -61,43 +61,34 @@ fn walk(
             return Ok(());
         }
     }
-    let mut entries: Vec<_> = fs::read_dir(dir)
-        .map_err(|e| format!("tree: {dir}: {e}"))?
-        .filter_map(|e| e.ok())
-        .collect();
-    entries.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+    let mut entries = fs_ops::ls(dir, false)
+        .map_err(|e| format!("tree: {dir}: {e}"))?;
 
     // filter hidden files
-    entries.retain(|e| {
-        !e.file_name().to_string_lossy().starts_with('.')
-    });
+    entries.retain(|e| !e.name.starts_with('.'));
 
     if opts.dirs_only {
-        entries.retain(|e| {
-            e.metadata().map(|m| m.is_dir()).unwrap_or(false)
-        });
+        entries.retain(|e| e.is_dir());
     }
 
     let count = entries.len();
     for (i, entry) in entries.iter().enumerate() {
         let is_last = i == count - 1;
         let connector = if is_last { "\u{2514}\u{2500}\u{2500} " } else { "\u{251c}\u{2500}\u{2500} " };
-        let name = entry.file_name().to_string_lossy().into_owned();
-        let meta = entry.metadata().map_err(|e| e.to_string())?;
 
         output.push_str(prefix);
         output.push_str(connector);
-        output.push_str(&name);
+        output.push_str(&entry.name);
         output.push('\n');
 
-        if meta.is_dir() {
+        if entry.is_dir() {
             *dirs += 1;
             let child_prefix = if is_last {
                 format!("{prefix}    ")
             } else {
                 format!("{prefix}\u{2502}   ")
             };
-            let path = format!("{dir}/{name}");
+            let path = format!("{dir}/{}", entry.name);
             walk(&path, &child_prefix, opts, depth + 1, dirs, files, output)?;
         } else {
             *files += 1;
@@ -112,10 +103,10 @@ mod tests {
 
     fn setup() -> tempfile::TempDir {
         let dir = tempfile::tempdir().unwrap();
-        fs::write(dir.path().join("a.txt"), "").unwrap();
-        fs::write(dir.path().join("b.txt"), "").unwrap();
-        fs::create_dir(dir.path().join("sub")).unwrap();
-        fs::write(dir.path().join("sub/c.txt"), "").unwrap();
+        std::fs::write(dir.path().join("a.txt"), "").unwrap();
+        std::fs::write(dir.path().join("b.txt"), "").unwrap();
+        std::fs::create_dir(dir.path().join("sub")).unwrap();
+        std::fs::write(dir.path().join("sub/c.txt"), "").unwrap();
         dir
     }
 
@@ -162,8 +153,8 @@ mod tests {
     #[test]
     fn hides_dotfiles() {
         let dir = tempfile::tempdir().unwrap();
-        fs::write(dir.path().join(".hidden"), "").unwrap();
-        fs::write(dir.path().join("visible"), "").unwrap();
+        std::fs::write(dir.path().join(".hidden"), "").unwrap();
+        std::fs::write(dir.path().join("visible"), "").unwrap();
         let out = cmd(&dir.path().display().to_string()).unwrap();
         assert!(!out.contains(".hidden"));
         assert!(out.contains("visible"));

@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     append: bool,
@@ -25,11 +25,10 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
     let input = stdin.unwrap_or_default();
     for path in &opts.paths {
         if opts.append {
-            let existing = fs::read_to_string(path).unwrap_or_default();
-            fs::write(path, format!("{existing}{input}"))
+            fs_ops::append(path, input.as_bytes())
                 .map_err(|e| format!("tee: {path}: {e}"))?;
         } else {
-            fs::write(path, &input)
+            fs_ops::write(path, input.as_bytes())
                 .map_err(|e| format!("tee: {path}: {e}"))?;
         }
     }
@@ -56,7 +55,7 @@ mod tests {
         let p = dir.path().join("out.txt");
         let out = cmd(p.to_str().unwrap(), "data").unwrap();
         assert_eq!(out, "data");
-        assert_eq!(fs::read_to_string(&p).unwrap(), "data");
+        assert_eq!(std::fs::read_to_string(&p).unwrap(), "data");
     }
 
     #[test]
@@ -66,26 +65,26 @@ mod tests {
         let p2 = dir.path().join("b.txt");
         let args = format!("{} {}", p1.display(), p2.display());
         cmd(&args, "content").unwrap();
-        assert_eq!(fs::read_to_string(&p1).unwrap(), "content");
-        assert_eq!(fs::read_to_string(&p2).unwrap(), "content");
+        assert_eq!(std::fs::read_to_string(&p1).unwrap(), "content");
+        assert_eq!(std::fs::read_to_string(&p2).unwrap(), "content");
     }
 
     #[test]
     fn append_mode() {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("out.txt");
-        fs::write(&p, "old ").unwrap();
+        std::fs::write(&p, "old ").unwrap();
         cmd(&format!("-a {}", p.display()), "new").unwrap();
-        assert_eq!(fs::read_to_string(&p).unwrap(), "old new");
+        assert_eq!(std::fs::read_to_string(&p).unwrap(), "old new");
     }
 
     #[test]
     fn overwrite_by_default() {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("out.txt");
-        fs::write(&p, "old").unwrap();
+        std::fs::write(&p, "old").unwrap();
         cmd(p.to_str().unwrap(), "new").unwrap();
-        assert_eq!(fs::read_to_string(&p).unwrap(), "new");
+        assert_eq!(std::fs::read_to_string(&p).unwrap(), "new");
     }
 
     #[test]

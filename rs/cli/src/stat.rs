@@ -1,5 +1,4 @@
-use std::fs;
-use std::time::SystemTime;
+use crate::fs_ops;
 
 pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     let paths: Vec<&str> = args.split_whitespace().collect();
@@ -8,54 +7,22 @@ pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     }
     let mut output = String::new();
     for path in &paths {
-        let meta = fs::metadata(path)
-            .map_err(|e| format!("stat: {path}: {e}"))?;
+        let meta = fs_ops::stat(path).map_err(|e| format!("stat: {path}: {e}"))?;
         let file_type = if meta.is_dir() {
             "directory"
-        } else if meta.is_symlink() {
-            "symbolic link"
         } else {
             "regular file"
         };
-        let size = meta.len();
-        let modified = timestamp(&meta.modified());
-        let accessed = timestamp(&meta.accessed());
-        #[cfg(unix)]
-        let mode = {
-            use std::os::unix::fs::PermissionsExt;
-            meta.permissions().mode()
+        let modified = match meta.last_modified {
+            Some(ts) => format_date(ts),
+            None => "N/A".to_string(),
         };
-        #[cfg(not(unix))]
-        let mode = 0o755u32;
-        let perms = format_permissions(mode);
-        let kind = if meta.is_dir() { 'd' } else { '-' };
 
         output.push_str(&format!("  File: {path}\n"));
-        output.push_str(&format!("  Size: {size:<14} {file_type}\n"));
-        output.push_str(&format!("Access: ({:04o}/{kind}{perms})\n", mode & 0o7777));
-        output.push_str(&format!("Modify: {}\n", format_date(modified)));
-        output.push_str(&format!("Access: {}\n", format_date(accessed)));
+        output.push_str(&format!("  Size: {:<14} {file_type}\n", meta.size));
+        output.push_str(&format!("Modify: {modified}\n"));
     }
     Ok(output)
-}
-
-fn timestamp(t: &std::io::Result<SystemTime>) -> u64 {
-    t.as_ref()
-        .ok()
-        .and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok())
-        .map(|d| d.as_secs())
-        .unwrap_or(0)
-}
-
-fn format_permissions(mode: u32) -> String {
-    let mut s = String::with_capacity(9);
-    for shift in [6, 3, 0] {
-        let bits = (mode >> shift) & 0o7;
-        s.push(if bits & 4 != 0 { 'r' } else { '-' });
-        s.push(if bits & 2 != 0 { 'w' } else { '-' });
-        s.push(if bits & 1 != 0 { 'x' } else { '-' });
-    }
-    s
 }
 
 fn format_date(ts: u64) -> String {
@@ -90,7 +57,7 @@ mod tests {
     fn regular_file() {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("f.txt");
-        fs::write(&p, "hello").unwrap();
+        std::fs::write(&p, "hello").unwrap();
         let out = cmd(p.to_str().unwrap()).unwrap();
         assert!(out.contains("File:"));
         assert!(out.contains("regular file"));
@@ -105,23 +72,12 @@ mod tests {
     }
 
     #[test]
-    fn shows_permissions() {
+    fn shows_modify_timestamp() {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("f.txt");
-        fs::write(&p, "x").unwrap();
-        let out = cmd(p.to_str().unwrap()).unwrap();
-        assert!(out.contains("Access: ("));
-        assert!(out.contains("rw"));
-    }
-
-    #[test]
-    fn shows_timestamps() {
-        let dir = tempfile::tempdir().unwrap();
-        let p = dir.path().join("f.txt");
-        fs::write(&p, "x").unwrap();
+        std::fs::write(&p, "x").unwrap();
         let out = cmd(p.to_str().unwrap()).unwrap();
         assert!(out.contains("Modify:"));
-        // Check it contains a date-like pattern
         assert!(out.contains("20"));
     }
 
@@ -142,8 +98,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let p1 = dir.path().join("a.txt");
         let p2 = dir.path().join("b.txt");
-        fs::write(&p1, "aa").unwrap();
-        fs::write(&p2, "bbb").unwrap();
+        std::fs::write(&p1, "aa").unwrap();
+        std::fs::write(&p2, "bbb").unwrap();
         let args = format!("{} {}", p1.display(), p2.display());
         let out = cmd(&args).unwrap();
         assert!(out.contains("Size: 2"));

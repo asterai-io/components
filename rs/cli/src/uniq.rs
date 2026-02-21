@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     count: bool,
@@ -34,7 +34,7 @@ fn parse_opts(args: &str) -> Opts {
 pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
     let opts = parse_opts(args);
     let input = if let Some(path) = &opts.path {
-        fs::read_to_string(path).map_err(|e| format!("uniq: {path}: {e}"))?
+        fs_ops::read_to_string(path).map_err(|e| format!("uniq: {path}: {e}"))?
     } else {
         stdin.unwrap_or_default()
     };

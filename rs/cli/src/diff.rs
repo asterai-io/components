@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     unified: bool,
@@ -48,9 +48,9 @@ fn parse_opts(args: &str) -> Result<Opts, String> {
 
 pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     let opts = parse_opts(args)?;
-    let a = fs::read_to_string(&opts.file_a)
+    let a = fs_ops::read_to_string(&opts.file_a)
         .map_err(|e| format!("diff: {}: {e}", opts.file_a))?;
-    let b = fs::read_to_string(&opts.file_b)
+    let b = fs_ops::read_to_string(&opts.file_b)
         .map_err(|e| format!("diff: {}: {e}", opts.file_b))?;
     let lines_a: Vec<&str> = a.lines().collect();
     let lines_b: Vec<&str> = b.lines().collect();

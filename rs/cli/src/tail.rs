@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     lines: usize,
@@ -49,7 +49,7 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
                 }
                 output.push_str(&format!("==> {path} <==\n"));
             }
-            let content = fs::read_to_string(path)
+            let content = fs_ops::read_to_string(path)
                 .map_err(|e| format!("tail: {path}: {e}"))?;
             let all: Vec<&str> = content.lines().collect();
             let start = all.len().saturating_sub(opts.lines);

@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     number: bool,
@@ -35,7 +35,7 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
 
     let mut output = String::new();
     for path in &opts.paths {
-        let content = fs::read_to_string(path)
+        let content = fs_ops::read_to_string(path)
             .map_err(|e| format!("cat: {path}: {e}"))?;
         output.push_str(&content);
     }

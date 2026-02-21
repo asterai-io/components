@@ -32,6 +32,7 @@ interface common {
 
 world component {
   import asterai:host/api@1.0.0;
+  import asterai:fs/fs@1.0.0;
 
   export common;
 }

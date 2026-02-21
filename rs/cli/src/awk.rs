@@ -1,7 +1,7 @@
 //! Partial awk implementation covering the common subset: field extraction, patterns,
 //! BEGIN/END, arithmetic, variables, and regex matching. Unsupported features (loops,
 //! arrays, functions, printf, etc.) return clear "not implemented" errors.
-use std::fs;
+use crate::fs_ops;
 use regex::Regex;
 
 struct Opts {
@@ -740,7 +740,7 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
         let mut combined = String::new();
         for path in &opts.paths {
             let content =
-                fs::read_to_string(path).map_err(|e| format!("awk: {path}: {e}"))?;
+                fs_ops::read_to_string(path).map_err(|e| format!("awk: {path}: {e}"))?;
             combined.push_str(&content);
         }
         combined

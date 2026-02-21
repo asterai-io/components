@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 struct Opts {
     delimiter: char,
@@ -66,7 +66,7 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
     } else {
         let mut combined = String::new();
         for path in &opts.paths {
-            let content = fs::read_to_string(path)
+            let content = fs_ops::read_to_string(path)
                 .map_err(|e| format!("cut: {path}: {e}"))?;
             combined.push_str(&content);
         }

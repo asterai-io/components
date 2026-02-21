@@ -1,6 +1,5 @@
-use std::fs;
+use crate::fs_ops;
 use std::path::Path;
-use std::time::SystemTime;
 
 struct Opts {
     long: bool,
@@ -43,6 +42,13 @@ fn parse_opts(args: &str) -> Opts {
     opts
 }
 
+struct ItemInfo {
+    name: String,
+    size: u64,
+    modified: Option<u64>,
+    is_dir: bool,
+}
+
 pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     let opts = parse_opts(args);
     let mut output = String::new();
@@ -55,49 +61,31 @@ pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
             }
             output.push_str(&format!("{path}:\n"));
         }
-        list_dir(Path::new(path), &opts, &mut output, multi)?;
+        list_dir(path, &opts, &mut output, multi)?;
     }
     Ok(output)
 }
 
-struct EntryInfo {
-    name: String,
-    size: u64,
-    modified: u64,
-    is_dir: bool,
-    mode: u32,
-}
-
-fn list_dir(dir: &Path, opts: &Opts, output: &mut String, _multi: bool) -> Result<(), String> {
-    let entries = fs::read_dir(dir).map_err(|e| format!("ls: {}: {e}", dir.display()))?;
-    let mut items: Vec<EntryInfo> = Vec::new();
+fn list_dir(dir: &str, opts: &Opts, output: &mut String, _multi: bool) -> Result<(), String> {
+    let entries = fs_ops::ls(dir, false).map_err(|e| format!("ls: {dir}: {e}"))?;
+    let mut items: Vec<ItemInfo> = Vec::new();
 
     for entry in entries {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let name = entry.file_name().to_string_lossy().into_owned();
-        if !opts.all && name.starts_with('.') {
+        if !opts.all && entry.name.starts_with('.') {
             continue;
         }
-        let meta = entry.metadata().map_err(|e| e.to_string())?;
-        let modified = meta
-            .modified()
-            .ok()
-            .and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok())
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
-        #[cfg(unix)]
-        let mode = {
-            use std::os::unix::fs::PermissionsExt;
-            meta.permissions().mode()
+        let full_path = format!("{dir}/{}", entry.name);
+        let modified = if opts.long || opts.sort_time {
+            fs_ops::stat(&full_path).ok().and_then(|m| m.last_modified)
+        } else {
+            None
         };
-        #[cfg(not(unix))]
-        let mode = 0o755u32;
-        items.push(EntryInfo {
-            name,
-            size: meta.len(),
+        let is_dir = entry.is_dir();
+        items.push(ItemInfo {
+            name: entry.name,
+            size: entry.size,
             modified,
-            is_dir: meta.is_dir(),
-            mode,
+            is_dir,
         });
     }
 
@@ -112,10 +100,12 @@ fn list_dir(dir: &Path, opts: &Opts, output: &mut String, _multi: bool) -> Resul
     for item in &items {
         if opts.long {
             let kind = if item.is_dir { 'd' } else { '-' };
-            let perms = format_permissions(item.mode);
-            let date = format_date(item.modified);
+            let date = match item.modified {
+                Some(ts) => format_date(ts),
+                None => "               ".to_string(),
+            };
             output.push_str(&format!(
-                "{kind}{perms} {:>8}  {date}  {}\n",
+                "{kind} {:>8}  {date}  {}\n",
                 item.size, item.name
             ));
         } else {
@@ -127,25 +117,15 @@ fn list_dir(dir: &Path, opts: &Opts, output: &mut String, _multi: bool) -> Resul
     if opts.recursive {
         for item in &items {
             if item.is_dir {
-                let child = dir.join(&item.name);
-                output.push_str(&format!("\n{}:\n", child.display()));
-                list_dir(&child, opts, output, true)?;
+                let child = Path::new(dir).join(&item.name);
+                let child_str = child.to_string_lossy();
+                output.push_str(&format!("\n{child_str}:\n"));
+                list_dir(&child_str, opts, output, true)?;
             }
         }
     }
 
     Ok(())
-}
-
-fn format_permissions(mode: u32) -> String {
-    let mut s = String::with_capacity(9);
-    for shift in [6, 3, 0] {
-        let bits = (mode >> shift) & 0o7;
-        s.push(if bits & 4 != 0 { 'r' } else { '-' });
-        s.push(if bits & 2 != 0 { 'w' } else { '-' });
-        s.push(if bits & 1 != 0 { 'x' } else { '-' });
-    }
-    s
 }
 
 fn format_date(ts: u64) -> String {
@@ -179,10 +159,10 @@ mod tests {
 
     fn setup() -> tempfile::TempDir {
         let dir = tempfile::tempdir().unwrap();
-        fs::write(dir.path().join("alpha.txt"), "aaa").unwrap();
-        fs::write(dir.path().join("beta.txt"), "bb").unwrap();
-        fs::write(dir.path().join(".hidden"), "").unwrap();
-        fs::create_dir(dir.path().join("sub")).unwrap();
+        std::fs::write(dir.path().join("alpha.txt"), "aaa").unwrap();
+        std::fs::write(dir.path().join("beta.txt"), "bb").unwrap();
+        std::fs::write(dir.path().join(".hidden"), "").unwrap();
+        std::fs::create_dir(dir.path().join("sub")).unwrap();
         dir
     }
 
@@ -217,8 +197,8 @@ mod tests {
     fn long_format() {
         let dir = setup();
         let out = cmd(&format!("-l {}", dir.path().display())).unwrap();
-        assert!(out.contains("rw"));
         assert!(out.contains("alpha.txt"));
+        assert!(out.contains("3")); // size of "aaa"
     }
 
     #[test]
@@ -244,7 +224,7 @@ mod tests {
     #[test]
     fn recursive() {
         let dir = setup();
-        fs::write(dir.path().join("sub/child.txt"), "").unwrap();
+        std::fs::write(dir.path().join("sub/child.txt"), "").unwrap();
         let out = cmd(&format!("-R {}", dir.path().display())).unwrap();
         assert!(out.contains("child.txt"));
         assert!(out.contains("sub:"));

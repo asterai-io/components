@@ -1,5 +1,8 @@
 use crate::bindings::exports::asterai::cli::common::Guest;
 
+#[allow(dead_code)]
+mod fs_ops;
+
 mod awk;
 mod cat;
 mod cp;

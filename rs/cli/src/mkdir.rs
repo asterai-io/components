@@ -1,4 +1,4 @@
-use std::fs;
+use crate::fs_ops;
 
 pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     let mut parents = false;
@@ -19,11 +19,21 @@ pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
         return Err("mkdir: missing operand".into());
     }
     for path in &paths {
-        if parents {
-            fs::create_dir_all(path).map_err(|e| format!("mkdir: {path}: {e}"))?;
-        } else {
-            fs::create_dir(path).map_err(|e| format!("mkdir: {path}: {e}"))?;
+        if !parents {
+            if let Ok(true) = fs_ops::exists(path) {
+                return Err(format!("mkdir: {path}: File exists"));
+            }
+            // Without -p, verify parent exists
+            if let Some(parent) = std::path::Path::new(path).parent() {
+                let parent_str = parent.to_string_lossy();
+                if !parent_str.is_empty() {
+                    if !fs_ops::exists(&parent_str).unwrap_or(false) {
+                        return Err(format!("mkdir: {path}: No such file or directory"));
+                    }
+                }
+            }
         }
+        fs_ops::mkdir(path).map_err(|e| format!("mkdir: {path}: {e}"))?;
     }
     Ok(String::new())
 }
