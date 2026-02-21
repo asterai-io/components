@@ -16,6 +16,7 @@ mod tail;
 mod tee;
 mod touch;
 mod tree;
+mod wc;
 
 #[allow(warnings)]
 mod bindings {
@@ -76,6 +77,9 @@ impl Guest for Component {
     }
     fn tee(args: String, stdin: Option<String>) -> Result<String, String> {
         tee::run(&args, stdin)
+    }
+    fn wc(args: String, stdin: Option<String>) -> Result<String, String> {
+        wc::run(&args, stdin)
     }
 }
 
