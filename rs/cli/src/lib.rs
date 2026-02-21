@@ -14,6 +14,7 @@ mod mv;
 mod rm;
 mod sed;
 mod sort;
+mod stat;
 mod tail;
 mod tee;
 mod touch;
@@ -63,6 +64,9 @@ impl Guest for Component {
     }
     fn sort(args: String, stdin: Option<String>) -> Result<String, String> {
         sort::run(&args, stdin)
+    }
+    fn stat(args: String, stdin: Option<String>) -> Result<String, String> {
+        stat::run(&args, stdin)
     }
     fn jq(args: String, stdin: Option<String>) -> Result<String, String> {
         jq::run(&args, stdin)
