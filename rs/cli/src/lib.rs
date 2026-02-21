@@ -1,6 +1,7 @@
 use crate::bindings::exports::asterai::cli::command::Guest;
 
 mod cat;
+mod cp;
 mod ls;
 
 #[allow(warnings)]
@@ -22,6 +23,7 @@ impl Guest for Component {
         let cmd_args = parts.next().unwrap_or("");
         match cmd {
             "cat" => cat::run(cmd_args, stdin),
+            "cp" => cp::run(cmd_args, stdin),
             "ls" => ls::run(cmd_args, stdin),
             _ => Err(format!("unknown command: {cmd}")),
         }
