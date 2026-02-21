@@ -24,3 +24,6 @@ jaq-std = "2"
 jaq-json = "1"
 hifijson = "0.2"
 serde_json = "1"
+
+[dev-dependencies]
+tempfile = "3"
