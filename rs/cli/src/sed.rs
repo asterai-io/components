@@ -115,3 +115,128 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
     }
     Ok(output)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str, stdin: Option<&str>) -> Result<String, String> {
+        run(args, stdin.map(String::from))
+    }
+
+    #[test]
+    fn basic_substitute_stdin() {
+        let out = cmd("s/foo/bar/", Some("foo baz foo")).unwrap();
+        assert_eq!(out, "bar baz foo");
+    }
+
+    #[test]
+    fn global_flag() {
+        let out = cmd("s/foo/bar/g", Some("foo baz foo")).unwrap();
+        assert_eq!(out, "bar baz bar");
+    }
+
+    #[test]
+    fn multiline() {
+        let out = cmd("s/a/b/", Some("aaa\naaa")).unwrap();
+        assert_eq!(out, "baa\nbaa");
+    }
+
+    #[test]
+    fn global_multiline() {
+        let out = cmd("s/a/b/g", Some("aaa\naaa")).unwrap();
+        assert_eq!(out, "bbb\nbbb");
+    }
+
+    #[test]
+    fn case_insensitive() {
+        let out = cmd("s/hello/world/i", Some("Hello HELLO hello")).unwrap();
+        assert_eq!(out, "world HELLO hello");
+    }
+
+    #[test]
+    fn case_insensitive_global() {
+        let out = cmd("s/hello/world/gi", Some("Hello HELLO hello")).unwrap();
+        assert_eq!(out, "world world world");
+    }
+
+    #[test]
+    fn custom_delimiter() {
+        let out = cmd("s|foo|bar|", Some("foo")).unwrap();
+        assert_eq!(out, "bar");
+    }
+
+    #[test]
+    fn regex_pattern() {
+        let out = cmd("s/[0-9]+/NUM/g", Some("abc 123 def 456")).unwrap();
+        assert_eq!(out, "abc NUM def NUM");
+    }
+
+    #[test]
+    fn preserves_trailing_newline() {
+        let out = cmd("s/a/b/", Some("aaa\n")).unwrap();
+        assert_eq!(out, "baa\n");
+    }
+
+    #[test]
+    fn no_trailing_newline_preserved() {
+        let out = cmd("s/a/b/", Some("aaa")).unwrap();
+        assert_eq!(out, "baa");
+    }
+
+    #[test]
+    fn empty_replacement() {
+        let out = cmd("s/foo//g", Some("foo bar foo")).unwrap();
+        assert_eq!(out, " bar ");
+    }
+
+    #[test]
+    fn no_match() {
+        let out = cmd("s/zzz/yyy/", Some("hello world")).unwrap();
+        assert_eq!(out, "hello world");
+    }
+
+    #[test]
+    fn file_mode() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("f.txt");
+        std::fs::write(&path, "hello world\n").unwrap();
+        let out = cmd(&format!("s/world/rust/ {}", path.display()), None).unwrap();
+        assert_eq!(out, "hello rust\n");
+    }
+
+    #[test]
+    fn in_place() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("f.txt");
+        std::fs::write(&path, "aaa\nbbb\n").unwrap();
+        let out = cmd(&format!("-i s/aaa/ccc/ {}", path.display()), None).unwrap();
+        assert_eq!(out, "");
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content, "ccc\nbbb\n");
+    }
+
+    #[test]
+    fn missing_expression() {
+        let err = cmd("", Some("x")).unwrap_err();
+        assert!(err.contains("missing expression"));
+    }
+
+    #[test]
+    fn unsupported_expression() {
+        let err = cmd("d", Some("x")).unwrap_err();
+        assert!(err.contains("unsupported"));
+    }
+
+    #[test]
+    fn invalid_regex() {
+        let err = cmd("s/[bad/repl/", Some("x")).unwrap_err();
+        assert!(err.contains("invalid pattern"));
+    }
+
+    #[test]
+    fn capture_group_replacement() {
+        let out = cmd("s/([a-z]+)@([a-z]+)/$2=$1/", Some("foo@bar")).unwrap();
+        assert_eq!(out, "bar=foo");
+    }
+}
