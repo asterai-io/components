@@ -1,5 +1,6 @@
 use crate::bindings::exports::asterai::cli::common::Guest;
 
+mod awk;
 mod cat;
 mod cp;
 mod cut;
@@ -35,6 +36,9 @@ mod bindings {
 struct Component;
 
 impl Guest for Component {
+    fn awk(args: String, stdin: Option<String>) -> Result<String, String> {
+        awk::run(&args, stdin)
+    }
     fn ls(args: String, stdin: Option<String>) -> Result<String, String> {
         ls::run(&args, stdin)
     }

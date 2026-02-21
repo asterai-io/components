@@ -27,6 +27,7 @@ interface common {
   cut: func(args: string, stdin: option<string>) -> result<string, string>;
   tr: func(args: string, stdin: option<string>) -> result<string, string>;
   stat: func(args: string, stdin: option<string>) -> result<string, string>;
+  awk: func(args: string, stdin: option<string>) -> result<string, string>;
 }
 
 world component {
