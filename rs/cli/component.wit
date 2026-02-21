@@ -20,6 +20,7 @@ interface common {
   tail: func(args: string, stdin: option<string>) -> result<string, string>;
   tree: func(args: string, stdin: option<string>) -> result<string, string>;
   tee: func(args: string, stdin: option<string>) -> result<string, string>;
+  diff: func(args: string, stdin: option<string>) -> result<string, string>;
 }
 
 world component {

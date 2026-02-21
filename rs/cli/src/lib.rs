@@ -2,6 +2,7 @@ use crate::bindings::exports::asterai::cli::common::Guest;
 
 mod cat;
 mod cp;
+mod diff;
 mod find;
 mod grep;
 mod head;
@@ -57,6 +58,9 @@ impl Guest for Component {
     }
     fn jq(args: String, stdin: Option<String>) -> Result<String, String> {
         jq::run(&args, stdin)
+    }
+    fn diff(args: String, stdin: Option<String>) -> Result<String, String> {
+        diff::run(&args, stdin)
     }
     fn find(args: String, stdin: Option<String>) -> Result<String, String> {
         find::run(&args, stdin)
