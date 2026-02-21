@@ -228,6 +228,17 @@ fn range_str(start: usize, end: usize) -> String {
     }
 }
 
+#[cfg(test)]
+fn run_with_strings(args: &str, a: &str, b: &str) -> Result<String, String> {
+    let dir = tempfile::tempdir().unwrap();
+    let pa = dir.path().join("a.txt");
+    let pb = dir.path().join("b.txt");
+    std::fs::write(&pa, a).unwrap();
+    std::fs::write(&pb, b).unwrap();
+    let full_args = format!("{args} {} {}", pa.display(), pb.display());
+    run(&full_args, None)
+}
+
 fn format_unified(opts: &Opts, edits: &[Edit]) -> String {
     let mut output = String::new();
     output.push_str(&format!("--- {}\n", opts.file_a));
@@ -304,4 +315,123 @@ fn format_unified(opts: &Opts, edits: &[Edit]) -> String {
         }
     }
     output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn diff(a: &str, b: &str) -> Result<String, String> {
+        run_with_strings("", a, b)
+    }
+
+    fn diff_unified(a: &str, b: &str) -> Result<String, String> {
+        run_with_strings("-u", a, b)
+    }
+
+    #[test]
+    fn identical_files() {
+        let out = diff("hello\nworld\n", "hello\nworld\n").unwrap();
+        assert_eq!(out, "");
+    }
+
+    #[test]
+    fn single_line_change() {
+        let out = diff("aaa\n", "bbb\n").unwrap();
+        assert!(out.contains("1c1"));
+        assert!(out.contains("< aaa"));
+        assert!(out.contains("> bbb"));
+    }
+
+    #[test]
+    fn line_added() {
+        let out = diff("aaa\n", "aaa\nbbb\n").unwrap();
+        assert!(out.contains("a"));
+        assert!(out.contains("> bbb"));
+    }
+
+    #[test]
+    fn line_deleted() {
+        let out = diff("aaa\nbbb\n", "aaa\n").unwrap();
+        assert!(out.contains("d"));
+        assert!(out.contains("< bbb"));
+    }
+
+    #[test]
+    fn multiple_changes() {
+        let out = diff("a\nb\nc\nd\n", "a\nB\nc\nD\n").unwrap();
+        assert!(out.contains("< b"));
+        assert!(out.contains("> B"));
+        assert!(out.contains("< d"));
+        assert!(out.contains("> D"));
+    }
+
+    #[test]
+    fn unified_header() {
+        let out = run_with_strings("-u", "a\n", "b\n").unwrap();
+        assert!(out.contains("---"));
+        assert!(out.contains("+++"));
+        assert!(out.contains("@@"));
+    }
+
+    #[test]
+    fn unified_context_lines() {
+        let a = "1\n2\n3\n4\n5\n";
+        let b = "1\n2\nX\n4\n5\n";
+        let out = diff_unified(a, b).unwrap();
+        assert!(out.contains("-3"));
+        assert!(out.contains("+X"));
+        assert!(out.contains(" 2"));
+        assert!(out.contains(" 4"));
+    }
+
+    #[test]
+    fn unified_custom_context() {
+        let a = "1\n2\n3\n4\n5\n6\n7\n";
+        let b = "1\n2\n3\nX\n5\n6\n7\n";
+        let out = run_with_strings("-U1", a, b).unwrap();
+        assert!(out.contains(" 3"));
+        assert!(out.contains(" 5"));
+        assert!(!out.contains(" 1\n"));
+        assert!(!out.contains(" 7\n"));
+    }
+
+    #[test]
+    fn both_empty() {
+        let out = diff("", "").unwrap();
+        assert_eq!(out, "");
+    }
+
+    #[test]
+    fn empty_to_content() {
+        let out = diff("", "hello\n").unwrap();
+        assert!(out.contains("> hello"));
+    }
+
+    #[test]
+    fn content_to_empty() {
+        let out = diff("hello\n", "").unwrap();
+        assert!(out.contains("< hello"));
+    }
+
+    #[test]
+    fn missing_file() {
+        let err = run("/no/a.txt /no/b.txt", None).unwrap_err();
+        assert!(err.contains("diff:"));
+    }
+
+    #[test]
+    fn requires_two_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("a.txt");
+        std::fs::write(&p, "x").unwrap();
+        let err = run(&format!("{}", p.display()), None).unwrap_err();
+        assert!(err.contains("requires exactly two files"));
+    }
+
+    #[test]
+    fn normal_format_separator() {
+        let out = diff("old\n", "new\n").unwrap();
+        assert!(out.contains("---\n"));
+    }
 }
