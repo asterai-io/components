@@ -1,5 +1,0 @@
-package asterai:cli@1.0.0;
-
-interface command {
-  run: func(args: string, stdin: option<string>) -> result<string, string>;
-}
