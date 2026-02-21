@@ -4,6 +4,7 @@ mod cat;
 mod cp;
 mod ls;
 mod mv;
+mod rm;
 
 #[allow(warnings)]
 mod bindings {
@@ -27,6 +28,7 @@ impl Guest for Component {
             "cp" => cp::run(cmd_args, stdin),
             "ls" => ls::run(cmd_args, stdin),
             "mv" => mv::run(cmd_args, stdin),
+            "rm" => rm::run(cmd_args, stdin),
             _ => Err(format!("unknown command: {cmd}")),
         }
     }
