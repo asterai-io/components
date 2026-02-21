@@ -11,6 +11,7 @@ mod mkdir;
 mod mv;
 mod rm;
 mod sed;
+mod tail;
 mod touch;
 
 #[allow(warnings)]
@@ -60,6 +61,9 @@ impl Guest for Component {
     }
     fn head(args: String, stdin: Option<String>) -> Result<String, String> {
         head::run(&args, stdin)
+    }
+    fn tail(args: String, stdin: Option<String>) -> Result<String, String> {
+        tail::run(&args, stdin)
     }
 }
 

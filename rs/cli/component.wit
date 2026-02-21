@@ -17,6 +17,7 @@ interface common {
   jq: func(args: string, stdin: option<string>) -> result<string, string>;
   find: func(args: string, stdin: option<string>) -> result<string, string>;
   head: func(args: string, stdin: option<string>) -> result<string, string>;
+  tail: func(args: string, stdin: option<string>) -> result<string, string>;
 }
 
 world component {
