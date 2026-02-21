@@ -2,6 +2,7 @@ use crate::bindings::exports::asterai::cli::command::Guest;
 
 mod cat;
 mod cp;
+mod grep;
 mod ls;
 mod mkdir;
 mod mv;
@@ -28,6 +29,7 @@ impl Guest for Component {
         match cmd {
             "cat" => cat::run(cmd_args, stdin),
             "cp" => cp::run(cmd_args, stdin),
+            "grep" => grep::run(cmd_args, stdin),
             "ls" => ls::run(cmd_args, stdin),
             "mkdir" => mkdir::run(cmd_args, stdin),
             "mv" => mv::run(cmd_args, stdin),
