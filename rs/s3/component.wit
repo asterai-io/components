@@ -1,0 +1,8 @@
+package asterai:s3@0.1.0;
+
+world component {
+  import asterai:host/api@1.0.0;
+
+  export asterai:fs/fs@1.0.0;
+  export asterai:fs/types@1.0.0;
+}
