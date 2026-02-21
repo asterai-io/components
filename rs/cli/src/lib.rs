@@ -13,6 +13,7 @@ mod rm;
 mod sed;
 mod tail;
 mod touch;
+mod tree;
 
 #[allow(warnings)]
 mod bindings {
@@ -64,6 +65,9 @@ impl Guest for Component {
     }
     fn tail(args: String, stdin: Option<String>) -> Result<String, String> {
         tail::run(&args, stdin)
+    }
+    fn tree(args: String, stdin: Option<String>) -> Result<String, String> {
+        tree::run(&args, stdin)
     }
 }
 

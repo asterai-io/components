@@ -18,6 +18,7 @@ interface common {
   find: func(args: string, stdin: option<string>) -> result<string, string>;
   head: func(args: string, stdin: option<string>) -> result<string, string>;
   tail: func(args: string, stdin: option<string>) -> result<string, string>;
+  tree: func(args: string, stdin: option<string>) -> result<string, string>;
 }
 
 world component {
