@@ -23,6 +23,7 @@ interface common {
   diff: func(args: string, stdin: option<string>) -> result<string, string>;
   wc: func(args: string, stdin: option<string>) -> result<string, string>;
   sort: func(args: string, stdin: option<string>) -> result<string, string>;
+  uniq: func(args: string, stdin: option<string>) -> result<string, string>;
 }
 
 world component {

@@ -17,6 +17,7 @@ mod tail;
 mod tee;
 mod touch;
 mod tree;
+mod uniq;
 mod wc;
 
 #[allow(warnings)]
@@ -81,6 +82,9 @@ impl Guest for Component {
     }
     fn tee(args: String, stdin: Option<String>) -> Result<String, String> {
         tee::run(&args, stdin)
+    }
+    fn uniq(args: String, stdin: Option<String>) -> Result<String, String> {
+        uniq::run(&args, stdin)
     }
     fn wc(args: String, stdin: Option<String>) -> Result<String, String> {
         wc::run(&args, stdin)
