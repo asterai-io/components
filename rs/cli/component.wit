@@ -4,8 +4,22 @@ interface command {
   run: func(args: string, stdin: option<string>) -> result<string, string>;
 }
 
+interface common {
+  ls: func(args: string, stdin: option<string>) -> result<string, string>;
+  cat: func(args: string, stdin: option<string>) -> result<string, string>;
+  cp: func(args: string, stdin: option<string>) -> result<string, string>;
+  mv: func(args: string, stdin: option<string>) -> result<string, string>;
+  rm: func(args: string, stdin: option<string>) -> result<string, string>;
+  mkdir: func(args: string, stdin: option<string>) -> result<string, string>;
+  touch: func(args: string, stdin: option<string>) -> result<string, string>;
+  grep: func(args: string, stdin: option<string>) -> result<string, string>;
+  sed: func(args: string, stdin: option<string>) -> result<string, string>;
+  jq: func(args: string, stdin: option<string>) -> result<string, string>;
+  find: func(args: string, stdin: option<string>) -> result<string, string>;
+}
+
 world component {
   import asterai:host/api@1.0.0;
 
-  export command;
+  export common;
 }

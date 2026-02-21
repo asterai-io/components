@@ -1,4 +1,4 @@
-use crate::bindings::exports::asterai::cli::command::Guest;
+use crate::bindings::exports::asterai::cli::common::Guest;
 
 mod cat;
 mod cp;
@@ -21,28 +21,41 @@ mod bindings {
     });
 }
 
-
 struct Component;
 
 impl Guest for Component {
-    fn run(args: String, stdin: Option<String>) -> Result<String, String> {
-        let mut parts = args.splitn(2, ' ');
-        let cmd = parts.next().unwrap_or("");
-        let cmd_args = parts.next().unwrap_or("");
-        match cmd {
-            "cat" => cat::run(cmd_args, stdin),
-            "cp" => cp::run(cmd_args, stdin),
-            "find" => find::run(cmd_args, stdin),
-            "grep" => grep::run(cmd_args, stdin),
-            "jq" => jq::run(cmd_args, stdin),
-            "ls" => ls::run(cmd_args, stdin),
-            "mkdir" => mkdir::run(cmd_args, stdin),
-            "mv" => mv::run(cmd_args, stdin),
-            "rm" => rm::run(cmd_args, stdin),
-            "sed" => sed::run(cmd_args, stdin),
-            "touch" => touch::run(cmd_args, stdin),
-            _ => Err(format!("unknown command: {cmd}")),
-        }
+    fn ls(args: String, stdin: Option<String>) -> Result<String, String> {
+        ls::run(&args, stdin)
+    }
+    fn cat(args: String, stdin: Option<String>) -> Result<String, String> {
+        cat::run(&args, stdin)
+    }
+    fn cp(args: String, stdin: Option<String>) -> Result<String, String> {
+        cp::run(&args, stdin)
+    }
+    fn mv(args: String, stdin: Option<String>) -> Result<String, String> {
+        mv::run(&args, stdin)
+    }
+    fn rm(args: String, stdin: Option<String>) -> Result<String, String> {
+        rm::run(&args, stdin)
+    }
+    fn mkdir(args: String, stdin: Option<String>) -> Result<String, String> {
+        mkdir::run(&args, stdin)
+    }
+    fn touch(args: String, stdin: Option<String>) -> Result<String, String> {
+        touch::run(&args, stdin)
+    }
+    fn grep(args: String, stdin: Option<String>) -> Result<String, String> {
+        grep::run(&args, stdin)
+    }
+    fn sed(args: String, stdin: Option<String>) -> Result<String, String> {
+        sed::run(&args, stdin)
+    }
+    fn jq(args: String, stdin: Option<String>) -> Result<String, String> {
+        jq::run(&args, stdin)
+    }
+    fn find(args: String, stdin: Option<String>) -> Result<String, String> {
+        find::run(&args, stdin)
     }
 }
 
