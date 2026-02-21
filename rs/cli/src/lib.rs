@@ -4,6 +4,7 @@ mod cat;
 mod cp;
 mod find;
 mod grep;
+mod head;
 mod jq;
 mod ls;
 mod mkdir;
@@ -56,6 +57,9 @@ impl Guest for Component {
     }
     fn find(args: String, stdin: Option<String>) -> Result<String, String> {
         find::run(&args, stdin)
+    }
+    fn head(args: String, stdin: Option<String>) -> Result<String, String> {
+        head::run(&args, stdin)
     }
 }
 
