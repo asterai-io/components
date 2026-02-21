@@ -12,6 +12,7 @@ mod mkdir;
 mod mv;
 mod rm;
 mod sed;
+mod sort;
 mod tail;
 mod tee;
 mod touch;
@@ -56,6 +57,9 @@ impl Guest for Component {
     }
     fn sed(args: String, stdin: Option<String>) -> Result<String, String> {
         sed::run(&args, stdin)
+    }
+    fn sort(args: String, stdin: Option<String>) -> Result<String, String> {
+        sort::run(&args, stdin)
     }
     fn jq(args: String, stdin: Option<String>) -> Result<String, String> {
         jq::run(&args, stdin)

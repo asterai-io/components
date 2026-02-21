@@ -22,6 +22,7 @@ interface common {
   tee: func(args: string, stdin: option<string>) -> result<string, string>;
   diff: func(args: string, stdin: option<string>) -> result<string, string>;
   wc: func(args: string, stdin: option<string>) -> result<string, string>;
+  sort: func(args: string, stdin: option<string>) -> result<string, string>;
 }
 
 world component {
