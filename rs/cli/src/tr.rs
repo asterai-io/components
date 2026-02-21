@@ -77,3 +77,72 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
     }
     Ok(output)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str, stdin: &str) -> Result<String, String> {
+        run(args, Some(stdin.to_string()))
+    }
+
+    #[test]
+    fn basic_translate() {
+        let out = cmd("abc xyz", "aabbcc").unwrap();
+        assert_eq!(out, "xxyyzz");
+    }
+
+    #[test]
+    fn range_expansion() {
+        let out = cmd("a-z A-Z", "hello").unwrap();
+        assert_eq!(out, "HELLO");
+    }
+
+    #[test]
+    fn delete_mode() {
+        let out = cmd("-d aeiou", "hello world").unwrap();
+        assert_eq!(out, "hll wrld");
+    }
+
+    #[test]
+    fn set2_shorter_repeats_last() {
+        let out = cmd("abc x", "aabbcc").unwrap();
+        assert_eq!(out, "xxxxxx");
+    }
+
+    #[test]
+    fn no_match_passthrough() {
+        let out = cmd("x y", "hello").unwrap();
+        assert_eq!(out, "hello");
+    }
+
+    #[test]
+    fn single_char_sets() {
+        let out = cmd("o 0", "foo").unwrap();
+        assert_eq!(out, "f00");
+    }
+
+    #[test]
+    fn missing_operand() {
+        let err = run("", Some("x".into())).unwrap_err();
+        assert!(err.contains("missing operand"));
+    }
+
+    #[test]
+    fn missing_set2() {
+        let err = run("abc", Some("x".into())).unwrap_err();
+        assert!(err.contains("missing operand"));
+    }
+
+    #[test]
+    fn delete_no_set2_ok() {
+        let out = cmd("-d x", "xaxbx").unwrap();
+        assert_eq!(out, "ab");
+    }
+
+    #[test]
+    fn preserves_newlines() {
+        let out = cmd("a b", "a\na\n").unwrap();
+        assert_eq!(out, "b\nb\n");
+    }
+}
