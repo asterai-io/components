@@ -172,3 +172,94 @@ fn format_date(ts: u64) -> String {
     let mon = months.get(m as usize).unwrap_or(&"???");
     format!("{mon} {d:2} {hour:02}:{minute:02} {y}")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn setup() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("alpha.txt"), "aaa").unwrap();
+        fs::write(dir.path().join("beta.txt"), "bb").unwrap();
+        fs::write(dir.path().join(".hidden"), "").unwrap();
+        fs::create_dir(dir.path().join("sub")).unwrap();
+        dir
+    }
+
+    fn cmd(args: &str) -> Result<String, String> {
+        run(args, None)
+    }
+
+    #[test]
+    fn basic_listing() {
+        let dir = setup();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert!(out.contains("alpha.txt"));
+        assert!(out.contains("beta.txt"));
+        assert!(out.contains("sub"));
+    }
+
+    #[test]
+    fn hides_dotfiles_by_default() {
+        let dir = setup();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert!(!out.contains(".hidden"));
+    }
+
+    #[test]
+    fn show_all() {
+        let dir = setup();
+        let out = cmd(&format!("-a {}", dir.path().display())).unwrap();
+        assert!(out.contains(".hidden"));
+    }
+
+    #[test]
+    fn long_format() {
+        let dir = setup();
+        let out = cmd(&format!("-l {}", dir.path().display())).unwrap();
+        assert!(out.contains("rw"));
+        assert!(out.contains("alpha.txt"));
+    }
+
+    #[test]
+    fn sorted_alphabetically() {
+        let dir = setup();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        let alpha_pos = lines.iter().position(|l| l.contains("alpha")).unwrap();
+        let beta_pos = lines.iter().position(|l| l.contains("beta")).unwrap();
+        assert!(alpha_pos < beta_pos);
+    }
+
+    #[test]
+    fn sort_by_size() {
+        let dir = setup();
+        let out = cmd(&format!("-lS {}", dir.path().display())).unwrap();
+        let lines: Vec<&str> = out.lines().collect();
+        let alpha_pos = lines.iter().position(|l| l.contains("alpha")).unwrap();
+        let beta_pos = lines.iter().position(|l| l.contains("beta")).unwrap();
+        assert!(alpha_pos < beta_pos); // alpha (3 bytes) > beta (2 bytes)
+    }
+
+    #[test]
+    fn recursive() {
+        let dir = setup();
+        fs::write(dir.path().join("sub/child.txt"), "").unwrap();
+        let out = cmd(&format!("-R {}", dir.path().display())).unwrap();
+        assert!(out.contains("child.txt"));
+        assert!(out.contains("sub:"));
+    }
+
+    #[test]
+    fn missing_dir() {
+        let err = cmd("/no/such/dir").unwrap_err();
+        assert!(err.contains("ls:"));
+    }
+
+    #[test]
+    fn empty_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert_eq!(out, "");
+    }
+}
