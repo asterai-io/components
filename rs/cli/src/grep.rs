@@ -144,3 +144,157 @@ fn collect_files(path: &str, files: &mut Vec<String>) -> Result<(), String> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str, stdin: Option<&str>) -> Result<String, String> {
+        run(args, stdin.map(String::from))
+    }
+
+    fn tmp(name: &str, content: &str) -> (tempfile::TempDir, String) {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(name);
+        std::fs::write(&path, content).unwrap();
+        (dir, path.to_str().unwrap().to_string())
+    }
+
+    #[test]
+    fn basic_match_stdin() {
+        let out = cmd("hello", Some("hello world\nfoo\nhello again")).unwrap();
+        assert_eq!(out, "hello world\nhello again\n");
+    }
+
+    #[test]
+    fn no_match_stdin() {
+        let out = cmd("zzz", Some("aaa\nbbb")).unwrap();
+        assert_eq!(out, "");
+    }
+
+    #[test]
+    fn regex_pattern() {
+        let out = cmd("^f.o$", Some("foo\nbar\nfzo")).unwrap();
+        assert_eq!(out, "foo\nfzo\n");
+    }
+
+    #[test]
+    fn case_insensitive() {
+        let out = cmd("-i hello", Some("Hello\nHELLO\nworld")).unwrap();
+        assert_eq!(out, "Hello\nHELLO\n");
+    }
+
+    #[test]
+    fn invert_match() {
+        let out = cmd("-v foo", Some("foo\nbar\nbaz")).unwrap();
+        assert_eq!(out, "bar\nbaz\n");
+    }
+
+    #[test]
+    fn count_flag() {
+        let out = cmd("-c foo", Some("foo\nbar\nfoo baz")).unwrap();
+        assert_eq!(out, "2\n");
+    }
+
+    #[test]
+    fn line_numbers() {
+        let out = cmd("-n bar", Some("foo\nbar\nbaz\nbar")).unwrap();
+        assert_eq!(out, "2:bar\n4:bar\n");
+    }
+
+    #[test]
+    fn files_only_stdin() {
+        let out = cmd("-l match", Some("no\nmatch here")).unwrap();
+        assert_eq!(out, "(stdin)\n");
+    }
+
+    #[test]
+    fn files_only_no_match() {
+        let out = cmd("-l zzz", Some("aaa\nbbb")).unwrap();
+        assert_eq!(out, "");
+    }
+
+    #[test]
+    fn combined_flags() {
+        let out = cmd("-inv hello", Some("hello\nworld\nHELLO")).unwrap();
+        assert_eq!(out, "2:world\n");
+    }
+
+    #[test]
+    fn missing_pattern() {
+        let err = cmd("", Some("x")).unwrap_err();
+        assert!(err.contains("missing pattern"));
+    }
+
+    #[test]
+    fn invalid_regex() {
+        let err = cmd("[invalid", Some("x")).unwrap_err();
+        assert!(err.contains("invalid pattern"));
+    }
+
+    #[test]
+    fn search_file() {
+        let (_dir, path) = tmp("f.txt", "alpha\nbeta\ngamma\n");
+        let out = cmd(&format!("beta {path}"), None).unwrap();
+        assert_eq!(out, "beta\n");
+    }
+
+    #[test]
+    fn search_file_count() {
+        let (_dir, path) = tmp("f.txt", "aa\nab\nac\n");
+        let out = cmd(&format!("-c ^a {path}"), None).unwrap();
+        assert_eq!(out, "3\n");
+    }
+
+    #[test]
+    fn multiple_files_show_filename() {
+        let dir = tempfile::tempdir().unwrap();
+        let p1 = dir.path().join("a.txt");
+        let p2 = dir.path().join("b.txt");
+        std::fs::write(&p1, "foo\nbar\n").unwrap();
+        std::fs::write(&p2, "baz\nfoo\n").unwrap();
+        let args = format!("foo {} {}", p1.display(), p2.display());
+        let out = cmd(&args, None).unwrap();
+        assert!(out.contains("a.txt:foo"));
+        assert!(out.contains("b.txt:foo"));
+    }
+
+    #[test]
+    fn files_only_with_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let p1 = dir.path().join("a.txt");
+        let p2 = dir.path().join("b.txt");
+        std::fs::write(&p1, "match\n").unwrap();
+        std::fs::write(&p2, "nope\n").unwrap();
+        let args = format!("-l match {} {}", p1.display(), p2.display());
+        let out = cmd(&args, None).unwrap();
+        assert!(out.contains("a.txt"));
+        assert!(!out.contains("b.txt"));
+    }
+
+    #[test]
+    fn recursive_search() {
+        let dir = tempfile::tempdir().unwrap();
+        let sub = dir.path().join("sub");
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(dir.path().join("top.txt"), "needle\n").unwrap();
+        std::fs::write(sub.join("deep.txt"), "needle\nhay\n").unwrap();
+        let args = format!("-r needle {}", dir.path().display());
+        let out = cmd(&args, None).unwrap();
+        assert!(out.contains("needle"));
+        let lines: Vec<_> = out.lines().collect();
+        assert_eq!(lines.len(), 2);
+    }
+
+    #[test]
+    fn missing_file() {
+        let err = cmd("pat /no/such/file.txt", None).unwrap_err();
+        assert!(err.contains("grep:"));
+    }
+
+    #[test]
+    fn count_with_invert() {
+        let out = cmd("-vc x", Some("x\na\nb\nx")).unwrap();
+        assert_eq!(out, "2\n");
+    }
+}
