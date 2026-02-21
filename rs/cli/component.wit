@@ -25,6 +25,7 @@ interface common {
   sort: func(args: string, stdin: option<string>) -> result<string, string>;
   uniq: func(args: string, stdin: option<string>) -> result<string, string>;
   cut: func(args: string, stdin: option<string>) -> result<string, string>;
+  tr: func(args: string, stdin: option<string>) -> result<string, string>;
 }
 
 world component {

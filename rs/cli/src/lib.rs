@@ -17,6 +17,7 @@ mod sort;
 mod tail;
 mod tee;
 mod touch;
+mod tr;
 mod tree;
 mod uniq;
 mod wc;
@@ -80,6 +81,9 @@ impl Guest for Component {
     }
     fn tail(args: String, stdin: Option<String>) -> Result<String, String> {
         tail::run(&args, stdin)
+    }
+    fn tr(args: String, stdin: Option<String>) -> Result<String, String> {
+        tr::run(&args, stdin)
     }
     fn tree(args: String, stdin: Option<String>) -> Result<String, String> {
         tree::run(&args, stdin)
