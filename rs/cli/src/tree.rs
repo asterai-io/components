@@ -105,3 +105,88 @@ fn walk(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn setup() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("a.txt"), "").unwrap();
+        fs::write(dir.path().join("b.txt"), "").unwrap();
+        fs::create_dir(dir.path().join("sub")).unwrap();
+        fs::write(dir.path().join("sub/c.txt"), "").unwrap();
+        dir
+    }
+
+    fn cmd(args: &str) -> Result<String, String> {
+        run(args, None)
+    }
+
+    #[test]
+    fn basic_tree() {
+        let dir = setup();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert!(out.contains("a.txt"));
+        assert!(out.contains("b.txt"));
+        assert!(out.contains("sub"));
+        assert!(out.contains("c.txt"));
+    }
+
+    #[test]
+    fn summary_line() {
+        let dir = setup();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert!(out.contains("directories"));
+        assert!(out.contains("files"));
+    }
+
+    #[test]
+    fn dirs_only() {
+        let dir = setup();
+        let out = cmd(&format!("-d {}", dir.path().display())).unwrap();
+        assert!(out.contains("sub"));
+        assert!(!out.contains("a.txt"));
+        assert!(!out.contains("b.txt"));
+    }
+
+    #[test]
+    fn max_depth() {
+        let dir = setup();
+        let out = cmd(&format!("-L 1 {}", dir.path().display())).unwrap();
+        assert!(out.contains("a.txt"));
+        assert!(out.contains("sub"));
+        assert!(!out.contains("c.txt"));
+    }
+
+    #[test]
+    fn hides_dotfiles() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join(".hidden"), "").unwrap();
+        fs::write(dir.path().join("visible"), "").unwrap();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert!(!out.contains(".hidden"));
+        assert!(out.contains("visible"));
+    }
+
+    #[test]
+    fn unicode_connectors() {
+        let dir = setup();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert!(out.contains("├") || out.contains("└"));
+    }
+
+    #[test]
+    fn root_header() {
+        let dir = setup();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert!(out.starts_with(&dir.path().display().to_string()));
+    }
+
+    #[test]
+    fn empty_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        assert!(out.contains("0 directories, 0 files"));
+    }
+}
