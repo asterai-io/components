@@ -33,3 +33,64 @@ pub fn run(args: &str, _stdin: Option<String>) -> Result<String, String> {
     }
     Ok(String::new())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str) -> Result<String, String> {
+        run(args, None)
+    }
+
+    #[test]
+    fn remove_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("f.txt");
+        fs::write(&p, "x").unwrap();
+        cmd(p.to_str().unwrap()).unwrap();
+        assert!(!p.exists());
+    }
+
+    #[test]
+    fn remove_multiple_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let a = dir.path().join("a.txt");
+        let b = dir.path().join("b.txt");
+        fs::write(&a, "").unwrap();
+        fs::write(&b, "").unwrap();
+        cmd(&format!("{} {}", a.display(), b.display())).unwrap();
+        assert!(!a.exists());
+        assert!(!b.exists());
+    }
+
+    #[test]
+    fn dir_without_recursive_fails() {
+        let dir = tempfile::tempdir().unwrap();
+        let sub = dir.path().join("sub");
+        fs::create_dir(&sub).unwrap();
+        let err = cmd(sub.to_str().unwrap()).unwrap_err();
+        assert!(err.contains("is a directory"));
+    }
+
+    #[test]
+    fn recursive_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        let sub = dir.path().join("sub");
+        fs::create_dir(&sub).unwrap();
+        fs::write(sub.join("f.txt"), "").unwrap();
+        cmd(&format!("-r {}", sub.display())).unwrap();
+        assert!(!sub.exists());
+    }
+
+    #[test]
+    fn missing_operand() {
+        let err = cmd("").unwrap_err();
+        assert!(err.contains("missing operand"));
+    }
+
+    #[test]
+    fn missing_file() {
+        let err = cmd("/no/such/file").unwrap_err();
+        assert!(err.contains("rm:"));
+    }
+}
