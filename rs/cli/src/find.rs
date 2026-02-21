@@ -167,3 +167,141 @@ fn matches_entry_with_meta(path: &Path, meta: &fs::Metadata, opts: &Opts) -> boo
     }
     true
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn setup() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("a.txt"), "").unwrap();
+        fs::write(dir.path().join("b.rs"), "").unwrap();
+        fs::create_dir(dir.path().join("sub")).unwrap();
+        fs::write(dir.path().join("sub/c.txt"), "").unwrap();
+        fs::create_dir(dir.path().join("sub/deep")).unwrap();
+        fs::write(dir.path().join("sub/deep/d.txt"), "").unwrap();
+        dir
+    }
+
+    fn cmd(args: &str) -> Result<String, String> {
+        run(args, None)
+    }
+
+    fn lines(out: &str) -> Vec<&str> {
+        out.lines().collect()
+    }
+
+    #[test]
+    fn find_all() {
+        let dir = setup();
+        let out = cmd(&dir.path().display().to_string()).unwrap();
+        let l = lines(&out);
+        assert!(l.len() >= 6); // root + a.txt + b.rs + sub/ + sub/c.txt + sub/deep/ + sub/deep/d.txt
+    }
+
+    #[test]
+    fn filter_by_name() {
+        let dir = setup();
+        let out = cmd(&format!("{} -name *.txt", dir.path().display())).unwrap();
+        let l = lines(&out);
+        assert!(l.iter().all(|p| p.ends_with(".txt")));
+        assert_eq!(l.len(), 3); // a.txt, sub/c.txt, sub/deep/d.txt
+    }
+
+    #[test]
+    fn filter_by_type_file() {
+        let dir = setup();
+        let out = cmd(&format!("{} -type f", dir.path().display())).unwrap();
+        let l = lines(&out);
+        for p in &l {
+            assert!(Path::new(p).is_file());
+        }
+    }
+
+    #[test]
+    fn filter_by_type_dir() {
+        let dir = setup();
+        let out = cmd(&format!("{} -type d", dir.path().display())).unwrap();
+        let l = lines(&out);
+        for p in &l {
+            assert!(Path::new(p).is_dir());
+        }
+        assert!(l.len() >= 3); // root, sub, sub/deep
+    }
+
+    #[test]
+    fn maxdepth_zero() {
+        let dir = setup();
+        let out = cmd(&format!("{} -maxdepth 0", dir.path().display())).unwrap();
+        let l = lines(&out);
+        assert_eq!(l.len(), 1); // root only
+    }
+
+    #[test]
+    fn maxdepth_one() {
+        let dir = setup();
+        let out = cmd(&format!("{} -maxdepth 1", dir.path().display())).unwrap();
+        let l = lines(&out);
+        // root + a.txt + b.rs + sub (no sub/c.txt, no sub/deep)
+        assert!(!l.iter().any(|p| p.contains("deep")));
+        assert!(!l.iter().any(|p| p.ends_with("c.txt")));
+    }
+
+    #[test]
+    fn name_with_question_mark() {
+        let dir = setup();
+        let out = cmd(&format!("{} -name ?.txt", dir.path().display())).unwrap();
+        let l = lines(&out);
+        assert!(l.iter().all(|p| {
+            let name = Path::new(p).file_name().unwrap().to_str().unwrap();
+            name.len() == 5 && name.ends_with(".txt")
+        }));
+    }
+
+    #[test]
+    fn combined_name_and_type() {
+        let dir = setup();
+        let out = cmd(&format!("{} -name *.txt -type f", dir.path().display())).unwrap();
+        let l = lines(&out);
+        assert_eq!(l.len(), 3);
+    }
+
+    #[test]
+    fn unknown_type() {
+        let dir = setup();
+        let err = cmd(&format!("{} -type x", dir.path().display())).unwrap_err();
+        assert!(err.contains("unknown type"));
+    }
+
+    #[test]
+    fn missing_root() {
+        let err = cmd("/no/such/path").unwrap_err();
+        assert!(err.contains("find:"));
+    }
+
+    #[test]
+    fn empty_result() {
+        let dir = setup();
+        let out = cmd(&format!("{} -name *.zzz", dir.path().display())).unwrap();
+        assert_eq!(out, "");
+    }
+
+    #[test]
+    fn glob_star() {
+        assert!(glob_match("*.txt", "hello.txt"));
+        assert!(!glob_match("*.txt", "hello.rs"));
+        assert!(glob_match("*", "anything"));
+    }
+
+    #[test]
+    fn glob_question() {
+        assert!(glob_match("?.txt", "a.txt"));
+        assert!(!glob_match("?.txt", "ab.txt"));
+    }
+
+    #[test]
+    fn glob_exact() {
+        assert!(glob_match("exact", "exact"));
+        assert!(!glob_match("exact", "other"));
+    }
+}
