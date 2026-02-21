@@ -77,3 +77,76 @@ fn format_date(ts: u64) -> String {
     let y = if m <= 2 { y + 1 } else { y };
     format!("{y}-{m:02}-{d:02} {hour:02}:{minute:02}:{second:02}")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str) -> Result<String, String> {
+        run(args, None)
+    }
+
+    #[test]
+    fn regular_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("f.txt");
+        fs::write(&p, "hello").unwrap();
+        let out = cmd(p.to_str().unwrap()).unwrap();
+        assert!(out.contains("File:"));
+        assert!(out.contains("regular file"));
+        assert!(out.contains("Size: 5"));
+    }
+
+    #[test]
+    fn directory() {
+        let dir = tempfile::tempdir().unwrap();
+        let out = cmd(dir.path().to_str().unwrap()).unwrap();
+        assert!(out.contains("directory"));
+    }
+
+    #[test]
+    fn shows_permissions() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("f.txt");
+        fs::write(&p, "x").unwrap();
+        let out = cmd(p.to_str().unwrap()).unwrap();
+        assert!(out.contains("Access: ("));
+        assert!(out.contains("rw"));
+    }
+
+    #[test]
+    fn shows_timestamps() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("f.txt");
+        fs::write(&p, "x").unwrap();
+        let out = cmd(p.to_str().unwrap()).unwrap();
+        assert!(out.contains("Modify:"));
+        // Check it contains a date-like pattern
+        assert!(out.contains("20"));
+    }
+
+    #[test]
+    fn missing_operand() {
+        let err = cmd("").unwrap_err();
+        assert!(err.contains("missing operand"));
+    }
+
+    #[test]
+    fn missing_file() {
+        let err = cmd("/no/such/file").unwrap_err();
+        assert!(err.contains("stat:"));
+    }
+
+    #[test]
+    fn multiple_files() {
+        let dir = tempfile::tempdir().unwrap();
+        let p1 = dir.path().join("a.txt");
+        let p2 = dir.path().join("b.txt");
+        fs::write(&p1, "aa").unwrap();
+        fs::write(&p2, "bbb").unwrap();
+        let args = format!("{} {}", p1.display(), p2.display());
+        let out = cmd(&args).unwrap();
+        assert!(out.contains("Size: 2"));
+        assert!(out.contains("Size: 3"));
+    }
+}
