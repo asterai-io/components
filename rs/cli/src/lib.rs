@@ -6,6 +6,7 @@ mod ls;
 mod mkdir;
 mod mv;
 mod rm;
+mod touch;
 
 #[allow(warnings)]
 mod bindings {
@@ -31,6 +32,7 @@ impl Guest for Component {
             "mkdir" => mkdir::run(cmd_args, stdin),
             "mv" => mv::run(cmd_args, stdin),
             "rm" => rm::run(cmd_args, stdin),
+            "touch" => touch::run(cmd_args, stdin),
             _ => Err(format!("unknown command: {cmd}")),
         }
     }
