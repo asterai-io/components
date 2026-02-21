@@ -12,6 +12,7 @@ mod mv;
 mod rm;
 mod sed;
 mod tail;
+mod tee;
 mod touch;
 mod tree;
 
@@ -68,6 +69,9 @@ impl Guest for Component {
     }
     fn tree(args: String, stdin: Option<String>) -> Result<String, String> {
         tree::run(&args, stdin)
+    }
+    fn tee(args: String, stdin: Option<String>) -> Result<String, String> {
+        tee::run(&args, stdin)
     }
 }
 
