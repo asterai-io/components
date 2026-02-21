@@ -89,3 +89,75 @@ pub fn run(args: &str, stdin: Option<String>) -> Result<String, String> {
     }
     Ok(output)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cmd(args: &str, stdin: Option<&str>) -> Result<String, String> {
+        run(args, stdin.map(String::from))
+    }
+
+    #[test]
+    fn single_field_tab() {
+        let out = cmd("-f1", Some("a\tb\tc\nd\te\tf")).unwrap();
+        assert_eq!(out, "a\nd\n");
+    }
+
+    #[test]
+    fn multiple_fields() {
+        let out = cmd("-f1,3", Some("a\tb\tc")).unwrap();
+        assert_eq!(out, "a\tc\n");
+    }
+
+    #[test]
+    fn field_range() {
+        let out = cmd("-f2-4", Some("a\tb\tc\td\te")).unwrap();
+        assert_eq!(out, "b\tc\td\n");
+    }
+
+    #[test]
+    fn custom_delimiter() {
+        let out = cmd("-d , -f 2", Some("a,b,c")).unwrap();
+        assert_eq!(out, "b\n");
+    }
+
+    #[test]
+    fn inline_delimiter() {
+        let out = cmd("-d: -f1", Some("root:x:0")).unwrap();
+        assert_eq!(out, "root\n");
+    }
+
+    #[test]
+    fn field_out_of_range() {
+        let out = cmd("-f5", Some("a\tb")).unwrap();
+        assert_eq!(out, "\n");
+    }
+
+    #[test]
+    fn multiline() {
+        let out = cmd("-d , -f 1,3", Some("a,b,c\nx,y,z")).unwrap();
+        assert_eq!(out, "a,c\nx,z\n");
+    }
+
+    #[test]
+    fn missing_fields() {
+        let err = cmd("-d ,", Some("x")).unwrap_err();
+        assert!(err.contains("must specify"));
+    }
+
+    #[test]
+    fn invalid_field_spec() {
+        let err = cmd("-f abc", Some("x")).unwrap_err();
+        assert!(err.contains("invalid field"));
+    }
+
+    #[test]
+    fn file_mode() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("f.txt");
+        std::fs::write(&p, "a\tb\tc\n").unwrap();
+        let out = cmd(&format!("-f2 {}", p.display()), None).unwrap();
+        assert_eq!(out, "b\n");
+    }
+}
