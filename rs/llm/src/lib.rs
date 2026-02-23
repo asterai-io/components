@@ -9,7 +9,6 @@ mod bindings {
     });
 }
 
-mod utils;
 mod anthropic;
 mod deepseek;
 mod fireworks;
@@ -20,6 +19,7 @@ mod openai;
 mod openrouter;
 mod perplexity;
 mod together;
+mod utils;
 mod venice;
 mod xai;
 

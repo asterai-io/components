@@ -1,6 +1,6 @@
+use crate::utils::exp_backoff::{retry_with_exp_backoff, RequestOutcome};
 use serde::{Deserialize, Serialize};
 use waki::Client;
-use crate::utils::exp_backoff::{retry_with_exp_backoff, RequestOutcome};
 
 const OPENAI_API_URL: &str = "https://api.openai.com/v1/chat/completions";
 
@@ -77,7 +77,7 @@ fn send_request(url: &str, api_key: &str, body_json: &str) -> Result<RequestOutc
             .ok_or_else(|| "no response from model".to_string())?;
         return Ok(RequestOutcome::Success(content));
     }
-    if status == 429 || status == 403 {
+    if status == 429 || status == 403 || status >= 500 {
         return Ok(RequestOutcome::Retryable(status, text));
     }
     Ok(RequestOutcome::Failure(text))
