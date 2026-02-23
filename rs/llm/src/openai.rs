@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use waki::Client;
+use crate::utils::exp_backoff::{retry_with_exp_backoff, RequestOutcome};
 
 const OPENAI_API_URL: &str = "https://api.openai.com/v1/chat/completions";
 
@@ -48,6 +49,10 @@ pub fn make_request(url: &str, prompt: &str, model: &str, api_key: &str) -> Resu
     };
     let body_json =
         serde_json::to_string(&request_body).map_err(|e| format!("failed to serialize: {e}"))?;
+    retry_with_exp_backoff(|| send_request(url, api_key, &body_json))
+}
+
+fn send_request(url: &str, api_key: &str, body_json: &str) -> Result<RequestOutcome, String> {
     let client = Client::new();
     let response = client
         .post(url)
@@ -57,20 +62,23 @@ pub fn make_request(url: &str, prompt: &str, model: &str, api_key: &str) -> Resu
         .send()
         .map_err(|e| format!("request failed: {e}"))?;
     let status = response.status_code();
-    let is_success = status >= 200 && status < 300;
     let body = response
         .body()
         .map_err(|e| format!("failed to read response: {e}"))?;
     let text = String::from_utf8(body).map_err(|e| format!("invalid response encoding: {e}"))?;
-    if !is_success {
-        return Err(text);
+    if status >= 200 && status < 300 {
+        let resp: ChatResponse = serde_json::from_str(&text)
+            .map_err(|e| format!("failed to parse response: {e}: {text}"))?;
+        let content = resp
+            .choices
+            .into_iter()
+            .next()
+            .map(|c| c.message.content)
+            .ok_or_else(|| "no response from model".to_string())?;
+        return Ok(RequestOutcome::Success(content));
     }
-    let chat_response: ChatResponse = serde_json::from_str(&text)
-        .map_err(|e| format!("failed to parse response: {e}: {text}"))?;
-    chat_response
-        .choices
-        .into_iter()
-        .next()
-        .map(|c| c.message.content)
-        .ok_or_else(|| "no response from model".to_string())
+    if status == 429 || status == 403 {
+        return Ok(RequestOutcome::Retryable(status, text));
+    }
+    Ok(RequestOutcome::Failure(text))
 }

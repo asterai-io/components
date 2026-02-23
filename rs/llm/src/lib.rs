@@ -9,6 +9,7 @@ mod bindings {
     });
 }
 
+mod utils;
 mod anthropic;
 mod deepseek;
 mod fireworks;
