@@ -56,10 +56,15 @@ pub fn make_request(url: &str, prompt: &str, model: &str, api_key: &str) -> Resu
         .body(body_json.as_bytes())
         .send()
         .map_err(|e| format!("request failed: {e}"))?;
+    let status = response.status_code();
+    let is_success = status >= 200 && status < 300;
     let body = response
         .body()
         .map_err(|e| format!("failed to read response: {e}"))?;
     let text = String::from_utf8(body).map_err(|e| format!("invalid response encoding: {e}"))?;
+    if !is_success {
+        return Err(text);
+    }
     let chat_response: ChatResponse = serde_json::from_str(&text)
         .map_err(|e| format!("failed to parse response: {e}: {text}"))?;
     chat_response

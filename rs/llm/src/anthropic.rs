@@ -54,10 +54,15 @@ fn make_request(prompt: &str, model: &str, api_key: &str) -> Result<String, Stri
         .body(body_json.as_bytes())
         .send()
         .map_err(|e| format!("request failed: {e}"))?;
+    let status = response.status_code();
+    let is_success = status >= 200 && status < 300;
     let body = response
         .body()
         .map_err(|e| format!("failed to read response: {e}"))?;
     let text = String::from_utf8(body).map_err(|e| format!("invalid response encoding: {e}"))?;
+    if !is_success {
+        return Err(text);
+    }
     let messages_response: MessagesResponse = serde_json::from_str(&text)
         .map_err(|e| format!("failed to parse response: {e}: {text}"))?;
     messages_response
