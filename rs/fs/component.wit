@@ -78,9 +78,3 @@ interface fs {
   exists: func(path: string) -> result<bool, string>;
 }
 
-world component {
-  import asterai:host/api@1.0.0;
-
-  export fs;
-  export types;
-}
