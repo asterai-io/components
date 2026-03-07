@@ -118,6 +118,8 @@ prefer to export an interface from the component world.
 This is because interface is the unit of composability in WIT, and so
 the component must export an interface for other components to be
 able to call it.
+2. Unless specified otherwise, prefer lower level languages, such as Rust and
+Go, over Python and JS/TS, as those are more memory efficient.
 
 ## External References
 
