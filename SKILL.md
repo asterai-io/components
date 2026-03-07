@@ -121,6 +121,12 @@ able to call it.
 
 ## External References
 
+- [asterai LLMS.txt][asterai]
+- [host interface][host]
+- [WS host interface][host-ws]
+- [Cron host interface][host-cron]
+- [waki library][waki]
+
 [asterai]: http://asterai.io/llms.txt
 [host]: https://github.com/asterai-io/asterai/blob/f15b6e0c5dd6cf4ae1fb7e77ad72dbfe4a2bdb63/runtime/wit/asterai_host.wit
 [host-ws]: https://github.com/asterai-io/asterai/blob/f15b6e0c5dd6cf4ae1fb7e77ad72dbfe4a2bdb63/runtime/wit/asterai_host_ws.wit
