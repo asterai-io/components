@@ -1,4 +1,4 @@
-package asterai:llm@1.0.1;
+package asterai:llm@1.1.0;
 
 interface llm {
   /// Sends a prompt to an LLM and returns the response.
@@ -24,6 +24,68 @@ interface llm {
   ///   VENICE_KEY, XAI_KEY, DEEPSEEK_KEY, TOGETHER_KEY, FIREWORKS_KEY,
   ///   PERPLEXITY_KEY, OPENROUTER_KEY.
   prompt: func(prompt: string, model: string) -> string;
+
+  /// Role of a message in the conversation.
+  enum chat-role {
+    system,
+    user,
+    assistant,
+    tool,
+  }
+
+  /// A tool call requested by the assistant.
+  record tool-call {
+    /// Provider-generated ID for this tool call.
+    /// Pass this back in tool-call-id when sending
+    /// the tool result.
+    id: string,
+    /// Tool function name.
+    name: string,
+    /// JSON-encoded arguments for the tool.
+    arguments-json: string,
+  }
+
+  /// A message in the conversation.
+  record chat-message {
+    /// The role of this message.
+    role: chat-role,
+    /// Text content of the message.
+    content: string,
+    /// Tool calls the assistant wants to make.
+    /// Only populated for assistant messages.
+    tool-calls: list<tool-call>,
+    /// The tool call ID this message is a result for.
+    /// Only set for tool-role messages.
+    tool-call-id: option<string>,
+  }
+
+  /// A tool the model can call.
+  record tool-definition {
+    /// Tool function name.
+    name: string,
+    /// Human-readable description of what the tool does.
+    description: string,
+    /// JSON Schema describing the tool's parameters.
+    parameters-json-schema: string,
+  }
+
+  /// The response from a chat call.
+  record chat-response {
+    /// Text content of the response (may be empty
+    /// if the model only made tool calls).
+    content: string,
+    /// Tool calls the model wants to make
+    /// (empty if the model just responded with text).
+    tool-calls: list<tool-call>,
+  }
+
+  /// Structured chat with native tool calling support.
+  /// Uses the same model format as prompt.
+  chat: func(
+    messages: list<chat-message>,
+    tools: list<tool-definition>,
+    model: string,
+  ) -> chat-response;
 }
 
 world component {
