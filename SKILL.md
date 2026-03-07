@@ -42,7 +42,7 @@ The asterai registry can be thought of as NPM for WASM components. It allows
 anyone to pull public components without any auth, while logged in users can
 consume private components and also push environments (which are always private)
 so that they can be pulled or run in the cloud.
-Components can be easily composed together, as WIT can be used to generate typed
+Components can be easily composed together, as [WIT][wit] can be used to generate typed
 references in whatever language the component is being written in.
 
 ## Building a component
@@ -120,6 +120,9 @@ the component must export an interface for other components to be
 able to call it.
 2. Unless specified otherwise, prefer lower level languages, such as Rust and
 Go, over Python and JS/TS, as those are more memory efficient.
+3. Prefer typed [WIT][wit] functions. For example, prefer a function signature like
+`a: string, b: s32` over something like  `args-json: string` which obfuscates
+the real arg signature. Args can also contain WIT records if required.
 
 ## External References
 
@@ -128,9 +131,11 @@ Go, over Python and JS/TS, as those are more memory efficient.
 - [WS host interface][host-ws]
 - [Cron host interface][host-cron]
 - [waki library][waki]
+- [WIT reference][wit]
 
 [asterai]: http://asterai.io/llms.txt
 [host]: https://github.com/asterai-io/asterai/blob/f15b6e0c5dd6cf4ae1fb7e77ad72dbfe4a2bdb63/runtime/wit/asterai_host.wit
 [host-ws]: https://github.com/asterai-io/asterai/blob/f15b6e0c5dd6cf4ae1fb7e77ad72dbfe4a2bdb63/runtime/wit/asterai_host_ws.wit
 [host-cron]: https://github.com/asterai-io/asterai/blob/f15b6e0c5dd6cf4ae1fb7e77ad72dbfe4a2bdb63/runtime/wit/asterai_host_cron.wit
 [waki]: https://github.com/wacker-dev/waki
+[wit]: https://component-model.bytecodealliance.org/design/wit.html
