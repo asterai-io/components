@@ -111,6 +111,14 @@ Then you can call a function within it:
 
 `asterai env call my-environment comp-ns:comp-name interface/fn-name "arg1" ...`
 
+## Good Practices
+
+1. Instead of exporting a function directly in the component world,
+prefer to export an interface from the component world.
+This is because interface is the unit of composability in WIT, and so
+the component must export an interface for other components to be
+able to call it.
+
 ## External References
 
 [asterai]: http://asterai.io/llms.txt
