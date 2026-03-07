@@ -1,4 +1,6 @@
-use crate::bindings::exports::asterai::llm::llm::Guest;
+use crate::bindings::exports::asterai::llm::llm::{
+    ChatMessage, ChatResponse, Guest, ToolDefinition,
+};
 
 #[allow(warnings)]
 mod bindings {
@@ -44,6 +46,33 @@ impl Guest for Component {
             "perplexity" => perplexity::prompt(&prompt, model_name),
             "openrouter" => openrouter::prompt(&prompt, model_name),
             _ => format!("error: unsupported provider '{provider}'"),
+        }
+    }
+
+    fn chat(
+        messages: Vec<ChatMessage>,
+        tools: Vec<ToolDefinition>,
+        model: String,
+    ) -> ChatResponse {
+        let Some((provider, model_name)) = model.split_once('/') else {
+            return openai::error_response(&format!(
+                "invalid model format '{model}', expected 'provider/model'"
+            ));
+        };
+        match provider {
+            "openai" => openai::chat(messages, tools, model_name),
+            "anthropic" => anthropic::chat(messages, tools, model_name),
+            "mistral" => mistral::chat(messages, tools, model_name),
+            "groq" => groq::chat(messages, tools, model_name),
+            "google" => google::chat(messages, tools, model_name),
+            "venice" => venice::chat(messages, tools, model_name),
+            "xai" => xai::chat(messages, tools, model_name),
+            "deepseek" => deepseek::chat(messages, tools, model_name),
+            "together" => together::chat(messages, tools, model_name),
+            "fireworks" => fireworks::chat(messages, tools, model_name),
+            "perplexity" => perplexity::chat(messages, tools, model_name),
+            "openrouter" => openrouter::chat(messages, tools, model_name),
+            _ => openai::error_response(&format!("unsupported provider '{provider}'")),
         }
     }
 }
