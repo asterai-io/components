@@ -121,7 +121,7 @@ able to call it.
 
 ## External References
 
-- [asterai LLMS.txt][asterai]
+- [asterai llms.txt][asterai]
 - [host interface][host]
 - [WS host interface][host-ws]
 - [Cron host interface][host-cron]
