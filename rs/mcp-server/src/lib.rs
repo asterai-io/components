@@ -27,9 +27,11 @@ impl HttpGuest for Component {
 
 fn handle_post(request: &IncomingRequest, response_out: ResponseOutparam) {
     let Some(body) = read_body(request) else {
+        eprintln!("mcp-server: failed to read request body");
         respond(response_out, 400, "application/json", "");
         return;
     };
+    eprintln!("mcp-server: received: {body}");
     let rpc_request: serde_json::Value = match serde_json::from_str(&body) {
         Ok(v) => v,
         Err(_) => {
@@ -102,7 +104,15 @@ fn respond(response_out: ResponseOutparam, status: u16, content_type: &str, body
     ResponseOutparam::set(response_out, Ok(response));
     if !body.is_empty() {
         let stream = out_body.write().unwrap();
-        stream.blocking_write_and_flush(body.as_bytes()).unwrap();
+        let bytes = body.as_bytes();
+        let mut offset = 0;
+        while offset < bytes.len() {
+            let end = (offset + 4096).min(bytes.len());
+            stream
+                .blocking_write_and_flush(&bytes[offset..end])
+                .unwrap();
+            offset = end;
+        }
         drop(stream);
     }
     OutgoingBody::finish(out_body, None).unwrap();

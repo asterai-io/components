@@ -4,10 +4,12 @@ use serde_json::{Value, json};
 use std::env;
 use std::sync::LazyLock;
 
+const SELF_COMPONENT: &str = "asterai:mcp-server";
 const SERVER_NAME: &str = "asterai-mcp-server";
 const SERVER_VERSION: &str = "0.1.0";
 const PROTOCOL_VERSION: &str = "2025-03-26";
 const TOOLS_ENV: &str = "MCP_SERVER_TOOLS";
+const SKIP_INTERFACES: &[&str] = &["run", "incoming-handler"];
 
 static ALLOWED_COMPONENTS: LazyLock<Option<Vec<String>>> = LazyLock::new(|| {
     let raw = env::var(TOOLS_ENV).ok()?;
@@ -65,16 +67,24 @@ fn handle_initialize() -> Result<Value, (i32, &'static str)> {
 }
 
 fn handle_tools_list(_params: Option<Value>) -> Result<Value, (i32, &'static str)> {
+    eprintln!("mcp-server: tools/list called");
     let components = list_allowed_components();
+    eprintln!("mcp-server: got {} components", components.len());
     let mut tools = Vec::new();
     for comp in &components {
+        eprintln!(
+            "mcp-server: component {} has {} functions",
+            comp.name,
+            comp.functions.len()
+        );
         for func in &comp.functions {
-            if is_internal_function(func) {
+            if is_skip_function(func) {
                 continue;
             }
             tools.push(function_to_tool(&comp.name, func));
         }
     }
+    eprintln!("mcp-server: returning {} tools", tools.len());
     Ok(json!({ "tools": tools }))
 }
 
@@ -84,6 +94,7 @@ fn handle_tools_call(params: Option<Value>) -> Result<Value, (i32, &'static str)
         .get("name")
         .and_then(|v| v.as_str())
         .ok_or((-32602, "Invalid params"))?;
+    eprintln!("mcp-server: tools/call {tool_name}");
     let arguments = params.get("arguments").cloned().unwrap_or(json!({}));
     let (component_name, function_name) =
         parse_tool_name(tool_name).ok_or((-32602, "Invalid params"))?;
@@ -111,33 +122,36 @@ fn handle_tools_call(params: Option<Value>) -> Result<Value, (i32, &'static str)
 
 fn list_allowed_components() -> Vec<ComponentInfo> {
     let all = api::list_other_components();
-    match ALLOWED_COMPONENTS.as_ref() {
+    let filtered: Vec<ComponentInfo> = match ALLOWED_COMPONENTS.as_ref() {
         Some(allowed) => all
             .into_iter()
             .filter(|c| allowed.iter().any(|a| a == &c.name))
             .collect(),
         None => all,
-    }
+    };
+    // Filter out self — list_other_components should exclude it but
+    // doesn't always work in HTTP handler contexts.
+    filtered
+        .into_iter()
+        .filter(|c| c.name != SELF_COMPONENT)
+        .collect()
 }
 
 fn is_component_allowed(name: &str) -> bool {
+    if name == SELF_COMPONENT {
+        return false;
+    }
     match ALLOWED_COMPONENTS.as_ref() {
         Some(allowed) => allowed.iter().any(|a| a == name),
-        None => {
-            // Ensure it's not self — list_other_components excludes self,
-            // but verify the component exists in that list.
-            api::list_other_components().iter().any(|c| c.name == name)
-        }
+        None => api::list_other_components().iter().any(|c| c.name == name),
     }
 }
 
-fn is_internal_function(func: &FunctionInfo) -> bool {
-    let iface = match &func.interface_name {
-        Some(name) => name.as_str(),
-        None => return false,
+fn is_skip_function(func: &FunctionInfo) -> bool {
+    let Some(iface) = &func.interface_name else {
+        return false;
     };
-    // Skip WASI and asterai host interfaces — they're infrastructure, not tools.
-    iface.starts_with("wasi:") || iface.starts_with("asterai:host")
+    SKIP_INTERFACES.contains(&iface.as_str())
 }
 
 fn function_to_tool(component_name: &str, func: &FunctionInfo) -> Value {
@@ -153,7 +167,9 @@ fn function_to_tool(component_name: &str, func: &FunctionInfo) -> Value {
         let schema: Value =
             serde_json::from_str(&param.type_schema).unwrap_or(json!({ "type": "string" }));
         properties.insert(param.name.clone(), schema);
-        required.push(Value::String(param.name.clone()));
+        if !is_optional_type(&param.type_name) {
+            required.push(Value::String(param.name.clone()));
+        }
     }
     json!({
         "name": tool_name,
@@ -166,6 +182,10 @@ fn function_to_tool(component_name: &str, func: &FunctionInfo) -> Value {
     })
 }
 
+fn is_optional_type(type_name: &str) -> bool {
+    type_name.starts_with("option<")
+}
+
 fn format_function_name(func: &FunctionInfo) -> String {
     match &func.interface_name {
         Some(iface) => format!("{iface}/{}", func.name),
@@ -176,11 +196,6 @@ fn format_function_name(func: &FunctionInfo) -> String {
 /// Parses "comp-ns:comp-name/interface/function" into
 /// ("comp-ns:comp-name", "interface/function").
 fn parse_tool_name(tool_name: &str) -> Option<(String, String)> {
-    // Component names contain a colon (namespace:name), and may include
-    // a version suffix (@x.y.z). The function part is everything after
-    // the first slash that follows the component name.
-    // Format: "namespace:name/interface-name/function-name"
-    //    or:  "namespace:name/function-name" (bare export)
     let colon_pos = tool_name.find(':')?;
     let slash_pos = tool_name[colon_pos..].find('/')?;
     let split = colon_pos + slash_pos;
@@ -227,5 +242,12 @@ mod tests {
         assert!(parse_tool_name("no-colon/func").is_none());
         assert!(parse_tool_name("ns:comp").is_none());
         assert!(parse_tool_name("").is_none());
+    }
+
+    #[test]
+    fn test_is_optional_type() {
+        assert!(is_optional_type("option<string>"));
+        assert!(!is_optional_type("string"));
+        assert!(!is_optional_type("list<string>"));
     }
 }
