@@ -42,7 +42,6 @@ Components are organised by language:
 
 | Directory | Description           |
 |-----------|-----------------------|
-| `ts/`     | TypeScript components |
 | `rs/`     | Rust components       |
 
 ## 📚 Documentation
