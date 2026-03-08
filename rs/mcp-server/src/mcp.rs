@@ -97,7 +97,7 @@ fn handle_tools_call(params: Option<Value>) -> Result<Value, (i32, &'static str)
     eprintln!("mcp-server: tools/call {tool_name}");
     let arguments = params.get("arguments").cloned().unwrap_or(json!({}));
     let (component_name, function_name) =
-        parse_tool_name(tool_name).ok_or((-32602, "Invalid params"))?;
+        decode_tool_name(tool_name).ok_or((-32602, "Invalid params"))?;
     if !is_component_allowed(&component_name) {
         return Err((-32602, "Invalid params"));
     }
@@ -156,7 +156,7 @@ fn is_skip_function(func: &FunctionInfo) -> bool {
 
 fn function_to_tool(component_name: &str, func: &FunctionInfo) -> Value {
     let fn_name = format_function_name(func);
-    let tool_name = format!("{component_name}/{fn_name}");
+    let tool_name = encode_tool_name(component_name, &fn_name);
     let description = func
         .description
         .clone()
@@ -193,18 +193,28 @@ fn format_function_name(func: &FunctionInfo) -> String {
     }
 }
 
-/// Parses "comp-ns:comp-name/interface/function" into
-/// ("comp-ns:comp-name", "interface/function").
-fn parse_tool_name(tool_name: &str) -> Option<(String, String)> {
-    let colon_pos = tool_name.find(':')?;
-    let slash_pos = tool_name[colon_pos..].find('/')?;
-    let split = colon_pos + slash_pos;
-    let component_name = &tool_name[..split];
-    let function_name = &tool_name[split + 1..];
-    match component_name.is_empty() || function_name.is_empty() {
-        true => None,
-        false => Some((component_name.to_string(), function_name.to_string())),
+/// Encodes a tool name for MCP using only `[a-zA-Z0-9_-]`.
+/// `:` → `--`, `/` → `_`.
+/// e.g. ("asterai:cli", "common/ls") → "asterai--cli_common_ls"
+fn encode_tool_name(component_name: &str, function_name: &str) -> String {
+    let comp = component_name.replace(':', "--");
+    let func = function_name.replace('/', "_");
+    format!("{comp}_{func}")
+}
+
+/// Decodes an MCP tool name back to (component_name, function_name).
+/// e.g. "asterai--cli_common_ls" → ("asterai:cli", "common/ls")
+fn decode_tool_name(tool_name: &str) -> Option<(String, String)> {
+    let dash_pos = tool_name.find("--")?;
+    let sep_pos = dash_pos + 2 + tool_name[dash_pos + 2..].find('_')?;
+    let comp_encoded = &tool_name[..sep_pos];
+    let func_encoded = &tool_name[sep_pos + 1..];
+    if comp_encoded.is_empty() || func_encoded.is_empty() {
+        return None;
     }
+    let component_name = comp_encoded.replace("--", ":");
+    let function_name = func_encoded.replace('_', "/");
+    Some((component_name, function_name))
 }
 
 /// Converts MCP arguments object to the JSON array format expected by
@@ -214,9 +224,29 @@ fn build_args_json(arguments: &Value, func: &FunctionInfo) -> String {
     let args_array: Vec<Value> = func
         .inputs
         .iter()
-        .map(|param| arguments.get(&param.name).cloned().unwrap_or(Value::Null))
+        .map(|param| {
+            let value = arguments.get(&param.name).cloned().unwrap_or(Value::Null);
+            coerce_arg(value, &param.type_name)
+        })
         .collect();
     serde_json::to_string(&args_array).unwrap_or_else(|_| "[]".to_string())
+}
+
+/// Coerces an MCP argument value to match the expected WIT type.
+/// Handles string→bytes conversion for list<u8> params.
+fn coerce_arg(value: Value, type_name: &str) -> Value {
+    if !is_bytes_type(type_name) {
+        return value;
+    }
+    // Convert string to byte array for list<u8> params.
+    match value {
+        Value::String(s) => Value::Array(s.bytes().map(|b| Value::Number(b.into())).collect()),
+        other => other,
+    }
+}
+
+fn is_bytes_type(type_name: &str) -> bool {
+    type_name == "list<u8>" || type_name == "option<list<u8>>"
 }
 
 #[cfg(test)]
@@ -224,24 +254,51 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_tool_name() {
-        let (comp, func) = parse_tool_name("asterai:bom/api/search-locations").unwrap();
+    fn test_encode_tool_name() {
+        assert_eq!(
+            encode_tool_name("asterai:bom", "api/search-locations"),
+            "asterai--bom_api_search-locations"
+        );
+        assert_eq!(
+            encode_tool_name("asterai:cli", "common/ls"),
+            "asterai--cli_common_ls"
+        );
+    }
+
+    #[test]
+    fn test_decode_tool_name() {
+        let (comp, func) = decode_tool_name("asterai--bom_api_search-locations").unwrap();
         assert_eq!(comp, "asterai:bom");
         assert_eq!(func, "api/search-locations");
     }
 
     #[test]
-    fn test_parse_tool_name_bare() {
-        let (comp, func) = parse_tool_name("my:component/do-something").unwrap();
+    fn test_decode_tool_name_bare() {
+        let (comp, func) = decode_tool_name("my--component_do-something").unwrap();
         assert_eq!(comp, "my:component");
         assert_eq!(func, "do-something");
     }
 
     #[test]
-    fn test_parse_tool_name_invalid() {
-        assert!(parse_tool_name("no-colon/func").is_none());
-        assert!(parse_tool_name("ns:comp").is_none());
-        assert!(parse_tool_name("").is_none());
+    fn test_roundtrip() {
+        let cases = vec![
+            ("asterai:cli", "common/ls"),
+            ("asterai:fs-local", "fs/read"),
+            ("my:comp", "bare-func"),
+        ];
+        for (comp, func) in cases {
+            let encoded = encode_tool_name(comp, func);
+            let (dec_comp, dec_func) = decode_tool_name(&encoded).unwrap();
+            assert_eq!(dec_comp, comp);
+            assert_eq!(dec_func, func);
+        }
+    }
+
+    #[test]
+    fn test_decode_invalid() {
+        assert!(decode_tool_name("no-double-dash").is_none());
+        assert!(decode_tool_name("ns--comp").is_none());
+        assert!(decode_tool_name("").is_none());
     }
 
     #[test]
