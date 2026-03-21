@@ -13,6 +13,8 @@ const OPENAI_API_URL: &str = "https://api.openai.com/v1/chat/completions";
 struct SimpleChatRequest<'a> {
     model: &'a str,
     messages: Vec<SimpleMessage<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_tokens: Option<u32>,
 }
 
 #[derive(Serialize)]
@@ -42,6 +44,8 @@ struct ChatRequest {
     messages: Vec<MessageBody>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     tools: Vec<ToolBody>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_tokens: Option<u32>,
 }
 
 #[derive(Serialize)]
@@ -133,6 +137,7 @@ pub fn make_request(
             role: "user",
             content: prompt,
         }],
+        max_tokens: max_output_tokens(),
     };
     let body_json =
         serde_json::to_string(&request_body).map_err(|e| format!("failed to serialize: {e}"))?;
@@ -210,6 +215,7 @@ pub fn make_chat_request(
         model: model.to_string(),
         messages: api_messages,
         tools: api_tools,
+        max_tokens: max_output_tokens(),
     };
     let body_json = match serde_json::to_string(&request_body) {
         Ok(j) => j,
@@ -322,4 +328,10 @@ pub fn error_response(msg: &str) -> WitChatResponse {
         content: format!("error: {msg}"),
         tool_calls: Vec::new(),
     }
+}
+
+fn max_output_tokens() -> Option<u32> {
+    std::env::var("LLM_MAX_OUTPUT_TOKENS")
+        .ok()
+        .and_then(|v| v.parse().ok())
 }

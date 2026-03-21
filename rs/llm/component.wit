@@ -1,4 +1,4 @@
-package asterai:llm@1.1.0;
+package asterai:llm@1.1.1;
 
 interface llm {
   /// Sends a prompt to an LLM and returns the response.

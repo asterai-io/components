@@ -8,6 +8,7 @@ use serde_json::Value;
 use waki::Client;
 
 const ANTHROPIC_API_URL: &str = "https://api.anthropic.com/v1/messages";
+const DEFAULT_MAX_TOKENS: u32 = 4096;
 
 #[derive(Serialize)]
 struct SimpleMessagesRequest<'a> {
@@ -110,7 +111,7 @@ pub fn prompt(prompt: &str, model: &str) -> String {
 fn make_prompt_request(prompt: &str, model: &str, api_key: &str) -> Result<String, String> {
     let request_body = SimpleMessagesRequest {
         model,
-        max_tokens: 4096,
+        max_tokens: max_output_tokens(),
         messages: vec![SimpleMessage {
             role: "user",
             content: prompt,
@@ -188,7 +189,7 @@ fn make_chat_request(
         .collect();
     let request_body = MessagesRequest {
         model: model.to_string(),
-        max_tokens: 4096,
+        max_tokens: max_output_tokens(),
         system,
         messages: api_messages,
         tools: api_tools,
@@ -344,4 +345,11 @@ fn error_response(msg: &str) -> WitChatResponse {
         content: format!("error: {msg}"),
         tool_calls: Vec::new(),
     }
+}
+
+fn max_output_tokens() -> u32 {
+    std::env::var("LLM_MAX_OUTPUT_TOKENS")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(DEFAULT_MAX_TOKENS)
 }
