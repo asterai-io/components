@@ -1,0 +1,26 @@
+package asterai:excel@0.1.0;
+
+interface types {
+  record sheet-info {
+    index: u32,
+    name: string,
+    rows: u32,
+    cols: u32,
+  }
+}
+
+interface api {
+  use types.{sheet-info};
+
+  load-binary: func(data: list<u8>) -> result<string, string>;
+  load-base64: func(data: string) -> result<string, string>;
+  unload: func(doc-id: string) -> result<_, string>;
+
+  get-sheets: func(doc-id: string) -> result<list<sheet-info>, string>;
+  read-sheet-csv: func(doc-id: string, sheet-index: u32) -> result<string, string>;
+}
+
+world component {
+  export api;
+  export types;
+}

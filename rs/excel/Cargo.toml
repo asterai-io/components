@@ -1,0 +1,21 @@
+[package]
+name = "excel"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "s"
+debug = false
+strip = true
+lto = true
+
+[dependencies]
+wit-bindgen = "0.52.0"
+calamine = "0.26"
+sha2 = "0.10"
+base64 = "0.22"
