@@ -1,0 +1,22 @@
+[package]
+name = "word"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "s"
+debug = false
+strip = true
+lto = true
+
+[dependencies]
+wit-bindgen = "0.52.0"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+quick-xml = "0.37"
+sha2 = "0.10"
+base64 = "0.22"

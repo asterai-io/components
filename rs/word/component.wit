@@ -1,0 +1,37 @@
+package asterai:word@0.1.0;
+
+interface types {
+  record paragraph {
+    index: u32,
+    text: string,
+  }
+  record table-row {
+    cells: list<string>,
+  }
+}
+
+interface api {
+  use types.{paragraph, table-row};
+
+  load-binary: func(data: list<u8>) -> result<string, string>;
+  load-base64: func(data: string) -> result<string, string>;
+  save-binary: func(doc-id: string) -> result<list<u8>, string>;
+  save-base64: func(doc-id: string) -> result<string, string>;
+  unload: func(doc-id: string) -> result<_, string>;
+
+  get-paragraphs: func(doc-id: string) -> result<list<paragraph>, string>;
+  set-paragraph-text: func(doc-id: string, paragraph-index: u32, text: string) -> result<_, string>;
+
+  replace-text: func(doc-id: string, search: string, replace: string) -> result<u32, string>;
+
+  get-table-count: func(doc-id: string) -> result<u32, string>;
+  get-table-rows: func(doc-id: string, table-index: u32) -> result<list<table-row>, string>;
+  set-table-cell: func(doc-id: string, table-index: u32, row-index: u32, cell-index: u32, text: string) -> result<_, string>;
+  add-table-row: func(doc-id: string, table-index: u32, cells: list<string>) -> result<_, string>;
+  remove-table-row: func(doc-id: string, table-index: u32, row-index: u32) -> result<_, string>;
+}
+
+world component {
+  export api;
+  export types;
+}
