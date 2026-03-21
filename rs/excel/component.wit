@@ -6,18 +6,15 @@ interface types {
     name: string,
     rows: u32,
     cols: u32,
+    csv: string,
   }
 }
 
 interface api {
   use types.{sheet-info};
 
-  load-binary: func(data: list<u8>) -> result<string, string>;
-  load-base64: func(data: string) -> result<string, string>;
-  unload: func(doc-id: string) -> result<_, string>;
-
-  get-sheets: func(doc-id: string) -> result<list<sheet-info>, string>;
-  read-sheet-csv: func(doc-id: string, sheet-index: u32) -> result<string, string>;
+  parse-binary: func(data: list<u8>) -> result<list<sheet-info>, string>;
+  parse-base64: func(data: string) -> result<list<sheet-info>, string>;
 }
 
 world component {

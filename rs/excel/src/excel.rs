@@ -1,10 +1,5 @@
 use calamine::{Data, Reader, Xlsx};
-use sha2::{Digest, Sha256};
 use std::io::Cursor;
-
-pub fn sha256_hex(data: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(data))
-}
 
 pub struct ExcelDocument {
     sheets: Vec<SheetData>,
@@ -16,6 +11,12 @@ pub struct SheetData {
     pub rows: u32,
     pub cols: u32,
     csv: String,
+}
+
+impl SheetData {
+    pub fn csv(&self) -> &str {
+        &self.csv
+    }
 }
 
 impl ExcelDocument {
@@ -55,17 +56,6 @@ impl ExcelDocument {
         &self.sheets
     }
 
-    pub fn read_sheet_csv(&self, sheet_index: usize) -> Result<&str, String> {
-        self.sheets
-            .get(sheet_index)
-            .map(|s| s.csv.as_str())
-            .ok_or_else(|| {
-                format!(
-                    "sheet index {sheet_index} out of range (have {})",
-                    self.sheets.len()
-                )
-            })
-    }
 }
 
 fn csv_escape(field: &str) -> String {
